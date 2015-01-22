@@ -1,8 +1,10 @@
 Tasks = new Mongo.Collection("tasks");
+//Directory = new Mongo.Collection("directory");
 
 if (Meteor.isClient) {
   // This code only runs on the client
   Meteor.subscribe("tasks");
+  //Meteor.subscribe("directory");
   Template.body.helpers({
     tasks: function () {
       if (Session.get("hideCompleted")) {
@@ -18,6 +20,17 @@ if (Meteor.isClient) {
     incompleteCount: function() {
       return Tasks.find({checked: {$ne: true}}).count();
     },
+    users: function() {
+      //var tmp = Directory.find({});
+      //console.log("test log");
+      //console.log(JSON.stringify(tmp,undefined,2));
+      //return tmp;
+      // TODO for now just return a fake list of 2 users
+      return [
+        { text: "a" },
+        { text: "b" }
+      ];
+    }
   });
   Template.task.helpers({
     isOwner: function() {
@@ -107,4 +120,7 @@ if (Meteor.isServer) {
       ]
     });
   });
+  //Meteor.publish("directory", function() {
+  //  return Meteor.users.find({},{fields: {username:1}});
+  //});
 }

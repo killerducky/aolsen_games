@@ -24,6 +24,12 @@
         {{> task}}
       {{/each}}
     </ul>
+    <ul>
+      users
+      {{#each users}}
+        {{> user}}
+      {{/each}}
+    </ul>
   </div>
 </body>
 
@@ -48,3 +54,6 @@
 </template>
 
 
+<template name="user">
+  <li> {{text}} </li>
+</template>
