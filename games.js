@@ -1,8 +1,20 @@
-Tasks = new Mongo.Collection("tasks");
+// Meteor
+//   users
+//   all_roles
+//   games
+//     game_roles
+
+Tasks    = new Mongo.Collection("tasks");
+AllRoles = new Mongo.Collection("all_roles");
+Games    = new Mongo.Collection("games");
+GamePlayers = new Mongo.Collection("game_players");
 
 if (Meteor.isClient) {
   // This code only runs on the client
   Meteor.subscribe("tasks");
+  Meteor.subscribe("all_roles");
+  Meteor.subscribe("games");
+  Meteor.subscribe("game_players");
   Meteor.subscribe("directory");
   Template.body.helpers({
     tasks: function () {
@@ -21,6 +33,12 @@ if (Meteor.isClient) {
     },
     users: function() {
       return Meteor.users.find({});
+    },
+    all_roles: function() {
+      return AllRoles.find({});
+    },
+    games: function() {
+      return Games.find({});
     }
   });
   Template.task.helpers({
@@ -36,7 +54,6 @@ if (Meteor.isClient) {
       var text = event.target.text.value;
 
       Meteor.call("addTask", text);
-      //console.log(event);
 
       // Clear form
       event.target.text.value = "";
@@ -45,7 +62,10 @@ if (Meteor.isClient) {
     },
     "change .hide-completed input": function (event) {
       Session.set("hideCompleted", event.target.checked);
-    }
+    },
+    "click .add-game": function () {
+      Meteor.call("addGame");
+    },
   });
 
   Template.task.events({
@@ -71,7 +91,6 @@ Meteor.methods({
     if (! Meteor.userId()) {
       throw new Meteor.Error("not-authorized");
     }
-
     Tasks.insert({
       text: text,
       createdAt: new Date(),
@@ -100,6 +119,17 @@ Meteor.methods({
     }
     Tasks.update(taskId, { $set: {private: setToPrivate}});
   },
+  addGame: function () {
+    console.log("addGame");
+    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+    var gameId = Games.insert({ createdAt: new Date(), owner: Meteor.userId(), });
+    console.log(gameId);
+    GamePlayers.insert({ game: gameId, text: "TODO: Add string to identify game", player: Meteor.userId() });
+  },
+  joinGame: function (gameId) {
+    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+    GamesPlayers.insert({game:gameId, player:Meteor.userId()});
+  }
 });
 
 if (Meteor.isServer) {
@@ -111,7 +141,26 @@ if (Meteor.isServer) {
       ]
     });
   });
+  Meteor.publish("all_roles", function() {
+    return AllRoles.find({});
+  });
+  Meteor.publish("games", function() {
+    return Games.find({});
+  });
+  Meteor.publish("game_players", function() {
+    return GamePlayers.find({});
+  });
   Meteor.publish("directory", function() {
     return Meteor.users.find({},{fields: {username:1}});
+  });
+  Meteor.startup(function () {
+    if (AllRoles.find().count() === 0) {
+      AllRoles.insert({name: "Werewolf"});
+      AllRoles.insert({name: "Seer"});
+      AllRoles.insert({name: "Robber"});
+      AllRoles.insert({name: "Troublemaker"});
+      AllRoles.insert({name: "Insomniac"});
+      AllRoles.insert({name: "Villager"});
+    }
   });
 }

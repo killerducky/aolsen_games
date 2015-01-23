@@ -30,6 +30,21 @@
         {{> user}}
       {{/each}}
     </ul>
+    <ul>
+      Possible Roles
+      {{#each all_roles}}
+        <li> {{name}} </li>
+      {{/each}}
+    </ul>
+    {{#if currentUser}}
+      <button class="add-game">Create New Game</button>
+      <ul>
+        List of Games
+        {{#each games}}
+          <li> game: {{text}} </li>
+        {{/each}}
+      </ul>
+    {{/if}}
   </div>
 </body>
 
