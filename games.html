@@ -41,7 +41,17 @@
       <ul>
         List of Games
         {{#each games}}
-          <li> game: {{text}} </li>
+          <li> game: {{text}} 
+          {{#each players}}
+            <li> userId = {{this}} </li>
+          {{/each}}
+          <ul>
+            <li> <button class="toggle-join">
+              {{#if isPlayingThisGame}}Leave{{else}}Join{{/if}}
+            </button> </li>
+            <li> <button class="delete-game">Delete</button> </li>
+          </ul>
+          </li>
         {{/each}}
       </ul>
     {{/if}}
