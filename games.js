@@ -141,7 +141,8 @@ Meteor.methods({
   addGame: function () {
     console.log("addGame");
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    var gameId = Games.insert({ createdAt: new Date(), text: "Game created by "+Meteor.user().username, owner: Meteor.userId(), players: [Meteor.userId()]});
+    var gameId = Games.insert({ createdAt: new Date(), text: "Game created by "+Meteor.user().username, owner: Meteor.userId(), 
+        players: [{userid:Meteor.userId(), username:Meteor.user().username}]  });
     console.log(gameId);
     //GamePlayers.insert({ game: gameId, player: Meteor.userId() });
   },
@@ -150,13 +151,13 @@ Meteor.methods({
     //GamesPlayers.insert({game:gameId, player:Meteor.userId()});
     console.log("user wants to join");
     console.log(Games.findOne(gameId));
-    Games.update(gameId, {$push: {players: Meteor.userId()}});
+    Games.update(gameId, {$push: {players: {userid:Meteor.userId(), username:Meteor.user().username}}});
     console.log(Games.findOne(gameId));
   },
   leaveGame: function (gameId, userId) {
     console.log("user wants to leave");
     console.log(Games.findOne(gameId));
-    Games.update(gameId, {$pullAll: {players:[Meteor.userId()]}});
+    Games.update(gameId, {$pullAll: {players:[{userid:Meteor.userId(), username:Meteor.user().username}]}});
     console.log(Games.findOne(gameId));
     console.log("user left");
   },
@@ -167,7 +168,7 @@ Meteor.methods({
   },
   // TODO: This is returning undefined, figure out how to do this the right way
   isPlayingThisGame: function (game) {
-    var index = game.players.indexOf(Meteor.userId());
+    var index = game.players.indexOf({userid:Meteor.userId(), username:Meteor.user().username});
     var result = index != -1;
     return result;
   }
