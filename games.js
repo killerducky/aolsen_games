@@ -41,8 +41,18 @@ if (Meteor.isClient) {
       return Games.find({});
     },
     isPlayingThisGame: function() {
-      var index = this.players.indexOf(Meteor.userId());
-      var result = index != -1;
+      //var index = this.players.indexOf({userid:Meteor.userId(), username:Meteor.user().username});
+      //var result = index != -1;
+      var result = false;
+      for (var i=0; i < this.players.length; i++) {
+        if (this.players[i].userid == Meteor.userId()) {
+          result = true;
+          break;
+        }
+      }
+      console.log("result10", result);
+      console.log(this);
+      console.log(this.players);
       //var result = Meteor.call("isPlayingThisGame", this);
       return result;
     },
@@ -76,9 +86,20 @@ if (Meteor.isClient) {
       Meteor.call("deleteGame", this._id);
     },
     "click .toggle-join": function() {
-      var index = this.players.indexOf(Meteor.userId());
-      var result = index != -1;
-      //TODO refactor if (Meteor.call("isPlayingThisGame", this._id)) {
+      //var index = this.players.indexOf({userid:Meteor.userId(), username:Meteor.user().username});
+      //var result = index != -1;
+      //console.log("result1", result, Meteor.userID(), Meteor.user().username);
+      //console.log(this);
+      var result = false;
+      for (var i=0; i < this.players.length; i++) {
+        if (this.players[i].userid == Meteor.userId()) {
+          result = true;
+          break;
+        }
+      }
+      //TODO refactor if (Meteor.call("isPlayingThisGame", this._id, Meteor.userId(), Meteor.user().username)) {
+      //result = (Meteor.call("isPlayingThisGame", this._id, Meteor.userId(), Meteor.user().username));
+      //console.log("result2", result);
       if (result) {
         Meteor.call("leaveGame", this._id);
       } else {
@@ -139,27 +160,20 @@ Meteor.methods({
     Tasks.update(taskId, { $set: {private: setToPrivate}});
   },
   addGame: function () {
-    console.log("addGame");
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
     var gameId = Games.insert({ createdAt: new Date(), text: "Game created by "+Meteor.user().username, owner: Meteor.userId(), 
         players: [{userid:Meteor.userId(), username:Meteor.user().username}]  });
-    console.log(gameId);
     //GamePlayers.insert({ game: gameId, player: Meteor.userId() });
   },
   joinGame: function (gameId) {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
     //GamesPlayers.insert({game:gameId, player:Meteor.userId()});
     console.log("user wants to join");
-    console.log(Games.findOne(gameId));
     Games.update(gameId, {$push: {players: {userid:Meteor.userId(), username:Meteor.user().username}}});
-    console.log(Games.findOne(gameId));
   },
   leaveGame: function (gameId, userId) {
     console.log("user wants to leave");
-    console.log(Games.findOne(gameId));
     Games.update(gameId, {$pullAll: {players:[{userid:Meteor.userId(), username:Meteor.user().username}]}});
-    console.log(Games.findOne(gameId));
-    console.log("user left");
   },
   deleteGame: function (gameId) {
     var game = Games.findOne(gameId);
@@ -167,8 +181,8 @@ Meteor.methods({
     Games.remove(gameId);
   },
   // TODO: This is returning undefined, figure out how to do this the right way
-  isPlayingThisGame: function (game) {
-    var index = game.players.indexOf({userid:Meteor.userId(), username:Meteor.user().username});
+  isPlayingThisGame: function (game, userid, username) {
+    var index = game.players.indexOf({userid:userid, username:username});
     var result = index != -1;
     return result;
   }
