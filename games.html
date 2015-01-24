@@ -1,6 +1,6 @@
-<!-- simple-todos.html -->
+<!-- games.html -->
 <head>
-  <title>Todo List</title>
+  <title>One Night Werewolf</title>
 </head>
 
 <body>
@@ -21,28 +21,36 @@
       <ul>
         <li>List of Games</li>
         {{#each games}}
-          <li class="flow-list-item"> game: {{text}} </li>
-          <li class="flow-list-item"> Moderator: TBD </li>
-          <li class="flow-list-item">State: TDB</li>
-          <li class="flow-list-item">Day Timer: TDB</li>
-          <li class="flow-list-item">Players: TBD</li>
-          <li class="flow-list-item">Observers: TBD</li>
+          <li>Game: {{text}}
+          Moderator: TBD
+          State: TDB
+          Day Timer: TDB
+          Players: TBD
+          Observers: TBD
+          </li>
 
           <li> <button class="toggle-join"> {{#if isPlayingThisGame}}Leave{{else}}Join{{/if}} </button> </li>
 
           <li> <button class="delete-game">Delete</button> </li>
 
+          <!--
           <li class="role-list-item"> Add Role: </li>
           {{#each all_roles}}
             <li class="role-list-item"> <button class="add-role" data-game="{{../_id}}">{{name}}</button> </li>
           {{/each}}
           <li></li>
-
-          <li class="role-list-item"> Current Roles: </li>
-          {{#each game_roles}}
-            <li class="role-list-item">{{name}}</li>
+          -->
+          <li> Add Role:
+          {{#each all_roles}}
+            <button class="add-role" data-game="{{../_id}}">{{name}}</button>
           {{/each}}
-          <li></li>
+          </li>
+
+          <li> Current Roles:
+          {{#each game_roles}}
+            <button class="delete-role">{{name}}</button>
+          {{/each}}
+          </li>
 
           <li class="flow-list-item"> Players:</li>
           {{#each players}}

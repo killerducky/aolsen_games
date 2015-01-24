@@ -21,7 +21,7 @@ if (Meteor.isClient) {
       return Meteor.users.find({});
     },
     all_roles: function() {
-      return AllRoles.find({});
+      return AllRoles.find({}, {sort: {order:1}});
     },
     games: function() {
       return Games.find({});
@@ -30,7 +30,7 @@ if (Meteor.isClient) {
       return GamePlayers.find({gameid:this._id});
     },
     game_roles: function() {
-      return GameRoles.find({gameid:this._id});
+      return GameRoles.find({gameid:this._id}, {sort:{order:1}});
     },
     isPlayingThisGame: function() {
       result = isPlayingThisGameTest(this);
@@ -64,6 +64,9 @@ if (Meteor.isClient) {
       var gameId = $(event.currentTarget).attr("data-game");
       Meteor.call("addRole", gameId, this);
     },
+    "click .delete-role": function (event) {
+      Meteor.call("deleteRole", this);
+    },
   });
 
   Accounts.ui.config({
@@ -91,8 +94,12 @@ Meteor.methods({
   },
   addRole: function (gameId, role) {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    GameRoles.insert({gameid:gameId, roleid:role._id, name:role.name});
-  }
+    GameRoles.insert({gameid:gameId, roleid:role._id, name:role.name, order:role.order});
+  },
+  deleteRole: function (role) {
+    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+    GameRoles.remove(role._id);
+  },
 });
 
 if (Meteor.isServer) {
@@ -113,12 +120,12 @@ if (Meteor.isServer) {
   });
   Meteor.startup(function () {
     if (AllRoles.find().count() === 0) {
-      AllRoles.insert({name: "Werewolf"});
-      AllRoles.insert({name: "Seer"});
-      AllRoles.insert({name: "Robber"});
-      AllRoles.insert({name: "Troublemaker"});
-      AllRoles.insert({name: "Insomniac"});
-      AllRoles.insert({name: "Villager"});
+      AllRoles.insert({name: "Werewolf",     order: 1});
+      AllRoles.insert({name: "Seer",         order: 2});
+      AllRoles.insert({name: "Robber",       order: 3});
+      AllRoles.insert({name: "Troublemaker", order: 4});
+      AllRoles.insert({name: "Insomniac",    order: 5});
+      AllRoles.insert({name: "Villager",     order: 999});
     }
   });
 }
