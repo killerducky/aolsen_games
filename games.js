@@ -40,8 +40,11 @@ if (Meteor.isClient) {
     games: function() {
       return Games.find({});
     },
+    players: function() {
+      return GamePlayers.find({gameid:this._id});
+    },
     isPlayingThisGame: function() {
-      result = isPlayingThisGameTest(this, Meteor.userId());
+      result = isPlayingThisGameTest(this);
       return result;
     },
   });
@@ -51,26 +54,16 @@ if (Meteor.isClient) {
     }
   });
 
-  function isPlayingThisGameTest(game, userid) {
-    var result = false;
-    for (var i=0; i < game.players.length; i++) {
-      if (game.players[i].userid == userid) {
-        result = true;
-        break;
-      }
-    }
-    return result;
+  function isPlayingThisGameTest(game) {
+    var gamePlayerId = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
+    return (gamePlayerId) ? true : false;
   }
 
 
   Template.body.events({
     "submit .new-task": function (event) {
-      // This function is called when the new task form is submitted
       var text = event.target.text.value;
-
       Meteor.call("addTask", text);
-
-      // Clear form
       event.target.text.value = "";
       // Prevent default form submit
       return false;
@@ -85,7 +78,7 @@ if (Meteor.isClient) {
       Meteor.call("deleteGame", this._id);
     },
     "click .toggle-join": function() {
-      result = isPlayingThisGameTest(this, Meteor.userId());
+      result = isPlayingThisGameTest(this);
       if (result) {
         Meteor.call("leaveGame", this._id);
       } else {
@@ -126,15 +119,15 @@ Meteor.methods({
   },
   deleteTask: function (taskId) {
     var task = Tasks.findOne(taskId);
-    if (task.private && task.owner !== Mentor.userId()) {
-      throw new Mentor.Error("not-authorized");
+    if (task.private && task.owner !== Meteor.userId()) {
+      throw new Meteor.Error("not-authorized");
     }
     Tasks.remove(taskId);
   },
   setChecked: function (taskId, setChecked) {
     var task = Tasks.findOne(taskId);
-    if (task.private && task.owner !== Mentor.userId()) {
-      throw new Mentor.Error("not-authorized");
+    if (task.private && task.owner !== Meteor.userId()) {
+      throw new Meteor.Error("not-authorized");
     }
     Tasks.update(taskId, { $set: { checked: setChecked} });
   },
@@ -147,28 +140,21 @@ Meteor.methods({
   },
   addGame: function () {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    var gameId = Games.insert({ createdAt: new Date(), text: "Game created by "+Meteor.user().username, owner: Meteor.userId(), 
-        players: [{userid:Meteor.userId(), username:Meteor.user().username}]  });
-    //GamePlayers.insert({ game: gameId, player: Meteor.userId() });
+    var gameId = Games.insert({ createdAt: new Date(), text: "Game created by "+Meteor.user().username, owner: Meteor.userId()});
+    Meteor.call("joinGame", gameId);
+  },
+  deleteGame: function (gameId) {
+    //if (game.owner !== Meteor.userId()) {}
+    Games.remove(gameId);
   },
   joinGame: function (gameId) {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    Games.update(gameId, {$push: {players: {userid:Meteor.userId(), username:Meteor.user().username}}});
+    GamePlayers.insert({gameid:gameId, userid:Meteor.userId(), username:Meteor.user().username});
   },
-  leaveGame: function (gameId, userId) {
-    Games.update(gameId, {$pullAll: {players:[{userid:Meteor.userId(), username:Meteor.user().username}]}});
+  leaveGame: function (gameId) {
+    var gamePlayerId = GamePlayers.findOne({gameid:gameId, userid:Meteor.userId()});
+    GamePlayers.remove(gamePlayerId);
   },
-  deleteGame: function (gameId) {
-    var game = Games.findOne(gameId);
-    //if (game.owner !== Mentor.userId()) {}
-    Games.remove(gameId);
-  },
-  // TODO: This is returning undefined, figure out how to do this the right way
-  isPlayingThisGame: function (game, userid, username) {
-    var index = game.players.indexOf({userid:userid, username:username});
-    var result = index != -1;
-    return result;
-  }
 });
 
 if (Meteor.isServer) {
