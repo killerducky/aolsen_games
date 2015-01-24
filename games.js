@@ -7,12 +7,14 @@
 AllRoles = new Mongo.Collection("all_roles");
 Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
+GameRoles   = new Mongo.Collection("game_roles");
 
 if (Meteor.isClient) {
   // This code only runs on the client
   Meteor.subscribe("all_roles");
   Meteor.subscribe("games");
   Meteor.subscribe("game_players");
+  Meteor.subscribe("game_roles");
   Meteor.subscribe("directory");
   Template.body.helpers({
     users: function() {
@@ -26,6 +28,9 @@ if (Meteor.isClient) {
     },
     players: function() {
       return GamePlayers.find({gameid:this._id});
+    },
+    game_roles: function() {
+      return GameRoles.find({gameid:this._id});
     },
     isPlayingThisGame: function() {
       result = isPlayingThisGameTest(this);
@@ -54,6 +59,11 @@ if (Meteor.isClient) {
         Meteor.call("joinGame", this._id);
       }
     },
+    "click .add-role": function (event) {
+      // TODO: Why can I not get the game object itself instead of the game._id?
+      var gameId = $(event.currentTarget).attr("data-game");
+      Meteor.call("addRole", gameId, this);
+    },
   });
 
   Accounts.ui.config({
@@ -79,6 +89,10 @@ Meteor.methods({
     var gamePlayerId = GamePlayers.findOne({gameid:gameId, userid:Meteor.userId()});
     GamePlayers.remove(gamePlayerId);
   },
+  addRole: function (gameId, role) {
+    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+    GameRoles.insert({gameid:gameId, roleid:role._id, name:role.name});
+  }
 });
 
 if (Meteor.isServer) {
@@ -90,6 +104,9 @@ if (Meteor.isServer) {
   });
   Meteor.publish("game_players", function() {
     return GamePlayers.find({});
+  });
+  Meteor.publish("game_roles", function() {
+    return GameRoles.find({});
   });
   Meteor.publish("directory", function() {
     return Meteor.users.find({},{fields: {username:1}});

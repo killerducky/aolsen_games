@@ -11,71 +11,60 @@
     </header>
 
     <ul>
-      users
+      <li class="flow-list-item">Users</li>
       {{#each users}}
-        {{> user}}
-      {{/each}}
-    </ul>
-    <ul>
-      Possible Roles
-      {{#each all_roles}}
-        <li> {{name}} </li>
+        <li class="flow-list-item"> {{username}} </li>
       {{/each}}
     </ul>
     {{#if currentUser}}
       <button class="add-game">Create New Game</button>
       <ul>
-        List of Games
+        <li>List of Games</li>
         {{#each games}}
-          <li> game: {{text}} 
-          {{#each players}}
-            <li> playername = {{username}} </li>
+          <li class="flow-list-item"> game: {{text}} </li>
+          <li class="flow-list-item"> Moderator: TBD </li>
+          <li class="flow-list-item">State: TDB</li>
+          <li class="flow-list-item">Day Timer: TDB</li>
+          <li class="flow-list-item">Players: TBD</li>
+          <li class="flow-list-item">Observers: TBD</li>
+
+          <li> <button class="toggle-join"> {{#if isPlayingThisGame}}Leave{{else}}Join{{/if}} </button> </li>
+
+          <li> <button class="delete-game">Delete</button> </li>
+
+          <li class="role-list-item"> Add Role: </li>
+          {{#each all_roles}}
+            <li class="role-list-item"> <button class="add-role" data-game="{{../_id}}">{{name}}</button> </li>
           {{/each}}
-          <ul>
-            <li> <button class="toggle-join">
-              {{#if isPlayingThisGame}}Leave{{else}}Join{{/if}}
-            </button> </li>
-            <li> <button class="delete-game">Delete</button> </li>
-          </ul>
-          </li>
+          <li></li>
+
+          <li class="role-list-item"> Current Roles: </li>
+          {{#each game_roles}}
+            <li class="role-list-item">{{name}}</li>
+          {{/each}}
+          <li></li>
+
+          <li class="flow-list-item"> Players:</li>
+          {{#each players}}
+            <li class="flow-list-item">{{username}}</li>
+          {{/each}}
+          <li></li>
         {{/each}}
       </ul>
     {{/if}}
-    <ul style="list-style-type: none;">
-    <li>Moderator: Andy</li>
-    <li>State: Not Started</li>
-    <li>Day Timer: 2 minutes</li>
-    <li>Players: 5</li>
-    <li>Observers: 0</li>
-    <li>Roles:
-    <ul style="list-style-type: none;">
-      <li style="display: inline-block;">Werewolf</li>
-      <li style="display: inline-block;">Werewolf</li>
-      <li style="display: inline-block;">Seer</li>
-      <li style="display: inline-block;">Troublemaker</li>
-      <li style="display: inline-block;">Insomniac</li>
-      <li style="display: inline-block;">Villager</li>
-      <li style="display: inline-block;">Villager</li>
-      <li style="display: inline-block;">Villager</li>
-    </ul>
-    </li>
-    <li>Players:
-    <ul style="list-style-type: none;">
-      <li style="display: inline-block;">(Mod) Andy</li>
-      <li style="display: inline-block;">Alice</li>
-      <li style="display: inline-block;">Bob</li>
-      <li style="display: inline-block;">Charlie</li>
-      <li style="display: inline-block;">Derek</li>
-      <li style="display: inline-block;">Eric</li>
-      <li style="display: inline-block;">Fred</li>
-    </ul>
-    </li>
-    <li>Leave Game</li>
-    <li>Chat</li>
-    </ul>
   </div>
 </body>
 
 <template name="user">
   <li> {{username}} </li>
+</template>
+
+<!-- not used for now -->
+<template name="all-roles-template">
+  <ul>
+    Possible Roles
+    {{#each all_roles}}
+      <li> {{name}} </li>
+    {{/each}}
+  </ul>
 </template>
