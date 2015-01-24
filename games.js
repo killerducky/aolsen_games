@@ -41,19 +41,7 @@ if (Meteor.isClient) {
       return Games.find({});
     },
     isPlayingThisGame: function() {
-      //var index = this.players.indexOf({userid:Meteor.userId(), username:Meteor.user().username});
-      //var result = index != -1;
-      var result = false;
-      for (var i=0; i < this.players.length; i++) {
-        if (this.players[i].userid == Meteor.userId()) {
-          result = true;
-          break;
-        }
-      }
-      console.log("result10", result);
-      console.log(this);
-      console.log(this.players);
-      //var result = Meteor.call("isPlayingThisGame", this);
+      result = isPlayingThisGameTest(this, Meteor.userId());
       return result;
     },
   });
@@ -62,6 +50,17 @@ if (Meteor.isClient) {
       return this.owner == Meteor.userId();
     }
   });
+
+  function isPlayingThisGameTest(game, userid) {
+    var result = false;
+    for (var i=0; i < game.players.length; i++) {
+      if (game.players[i].userid == userid) {
+        result = true;
+        break;
+      }
+    }
+    return result;
+  }
 
 
   Template.body.events({
@@ -86,20 +85,7 @@ if (Meteor.isClient) {
       Meteor.call("deleteGame", this._id);
     },
     "click .toggle-join": function() {
-      //var index = this.players.indexOf({userid:Meteor.userId(), username:Meteor.user().username});
-      //var result = index != -1;
-      //console.log("result1", result, Meteor.userID(), Meteor.user().username);
-      //console.log(this);
-      var result = false;
-      for (var i=0; i < this.players.length; i++) {
-        if (this.players[i].userid == Meteor.userId()) {
-          result = true;
-          break;
-        }
-      }
-      //TODO refactor if (Meteor.call("isPlayingThisGame", this._id, Meteor.userId(), Meteor.user().username)) {
-      //result = (Meteor.call("isPlayingThisGame", this._id, Meteor.userId(), Meteor.user().username));
-      //console.log("result2", result);
+      result = isPlayingThisGameTest(this, Meteor.userId());
       if (result) {
         Meteor.call("leaveGame", this._id);
       } else {
@@ -167,12 +153,9 @@ Meteor.methods({
   },
   joinGame: function (gameId) {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    //GamesPlayers.insert({game:gameId, player:Meteor.userId()});
-    console.log("user wants to join");
     Games.update(gameId, {$push: {players: {userid:Meteor.userId(), username:Meteor.user().username}}});
   },
   leaveGame: function (gameId, userId) {
-    console.log("user wants to leave");
     Games.update(gameId, {$pullAll: {players:[{userid:Meteor.userId(), username:Meteor.user().username}]}});
   },
   deleteGame: function (gameId) {
