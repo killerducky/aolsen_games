@@ -9,6 +9,23 @@ Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
 GameRoles   = new Mongo.Collection("game_roles");
 
+// TODO: Move this to a separate file
+var GamePlayer = function (gameid, userid, username) {
+  this.gameid = gameid;
+  this.userid = userid;
+  this.username = username;
+  // TODO: Server should only publish this to everyone after the game is over
+  this.myinfo = {
+    orig_role      : null,
+    curr_role      : null,
+    night_targets  : [],
+    night_done     : false,
+    voted_for      : null,
+    received_votes : 0,
+    win            : false,
+  };
+};
+
 if (Meteor.isClient) {
   // This code only runs on the client
   Meteor.subscribe("all_roles");
@@ -42,16 +59,6 @@ if (Meteor.isClient) {
     players: function() {
       return GamePlayers.find({gameid:this._id});
     },
-    selectedPlayer: function() {
-      // TODO: Direct object compare didn't work, why not?
-      //console.log("selectedPlayer", this, Session.get("seer-player"));
-      //var result = Session.get("seer-player") === this;
-      //console.log(result);
-      return Session.get("seer-player") && Session.get("seer-player")._id === this._id;
-    },
-    selectedMiddle: function() {
-      return Session.get("seer-player") === null;
-    },
   });
 
   function isPlayingThisGameTest(game) {
@@ -65,7 +72,7 @@ if (Meteor.isClient) {
       Meteor.call("addGame");
     },
     "click .start-game": function() {
-      Meteor.call("startGame");
+      Meteor.call("startGame", this);
     },
     "click .delete-game": function() {
       Meteor.call("deleteGame", this._id);
@@ -79,8 +86,10 @@ if (Meteor.isClient) {
       }
     },
     "click .add-role": function (event) {
-      // TODO: Why can I not get the game object itself instead of the game._id?
+      // TODO: This method can't pass the real object, only a string gameId.
+      //       Maybe use a jQuery call to find the parent object?
       var gameId = $(event.currentTarget).attr("data-game");
+      console.log(gameId);
       Meteor.call("addRole", gameId, this);
     },
     "click .delete-role": function () {
@@ -88,14 +97,10 @@ if (Meteor.isClient) {
     },
   });
   Template.seerNight.events({
-    "click .seer-sel-player": function() {
-      Session.set("seer-player", this);
-    },
-    "click .seer-sel-middle": function() {
-      Session.set("seer-player", null);
-    },
-    "click .seer-submit": function() {
-      console.log("submit", Session.get("seer-player"), this);
+    "submit form": function(event) {
+      event.preventDefault();
+      result = $("input[name='player']:checked").val();
+      console.log("submit", result);
     },
   });
 
@@ -116,7 +121,7 @@ Meteor.methods({
   },
   joinGame: function (gameId) {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    GamePlayers.insert({gameid:gameId, userid:Meteor.userId(), username:Meteor.user().username});
+    GamePlayers.insert(new GamePlayer(gameId, Meteor.userId(), Meteor.user().username));
   },
   leaveGame: function (gameId) {
     var gamePlayerId = GamePlayers.findOne({gameid:gameId, userid:Meteor.userId()});
@@ -130,6 +135,9 @@ Meteor.methods({
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
     GameRoles.remove(role._id);
   },
+  startGame: function(game) {
+    console.log("startGame", game);
+  }
 });
 
 if (Meteor.isServer) {

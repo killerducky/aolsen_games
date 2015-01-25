@@ -35,13 +35,6 @@
           <button class="delete-game">Delete Game</button> 
           </li>
 
-          <!--
-          <li class="flow-list-item"> Add Role: </li>
-          {{#each all_roles}}
-            <li class="flow-list-item"> <button class="add-role" data-game="{{../_id}}">{{name}}</button> </li>
-          {{/each}}
-          <li></li>
-          -->
           <li> Players:
           {{#each players}}
             {{username}}
@@ -72,23 +65,17 @@
 </template>
 
 <template name="seerNight">
-  <li>Seer Night Actions: <br>
-  You are the Seer. Pick One player to Peek, or 2 cards from the middle. <br>
-  Players:
-  {{#each players}}
-    {{#if selectedPlayer}}
-      <button class="seer-unsel-player" data-game="{{../_id}}">{{username}}</button>
-    {{else}}
-      <button class="seer-sel-player" data-game="{{../_id}}">{{username}}</button>
-    {{/if}}
-  {{/each}}
-  {{#if selectedMiddle}}
-    <button class="seer-unsel-middle">2 cards from the middle</button>
-  {{else}}
-    <button class="seer-sel-middle">2 cards from the middle</button>
-  {{/if}}
-  <br>
-  <button class="seer-submit">Submit</button>
+  <li>
+    Seer Night Actions: <br>
+    You are the Seer. Pick One player to Peek, or 2 cards from the middle. <br>
+    Players:
+    <form>
+      {{#each players}}
+        <input type="radio" name="player" value="{type:player userid:{{this._id}}}">{{username}}
+      {{/each}}
+      <input type="radio" name="player" value="{type:middle}" checked>2 cards from the middle
+      <input type="submit" value="Submit">
+    </form>
   </li>
 </template>
 
