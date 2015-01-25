@@ -23,40 +23,44 @@
         {{#each games}}
           <li>Game: {{text}}
           Moderator: TBD
-          State: TDB
-          Day Timer: TDB
+          State: TBD
+          Day Timer: TBD
           Players: TBD
           Observers: TBD
           </li>
 
-          <li> <button class="toggle-join"> {{#if isPlayingThisGame}}Leave{{else}}Join{{/if}} </button> </li>
-
-          <li> <button class="delete-game">Delete</button> </li>
+          <li> 
+          <button class="toggle-join"> {{#if isPlayingThisGame}}Leave Game{{else}}Join Game{{/if}} </button>
+          <button class="start-game">Start Game</button> 
+          <button class="delete-game">Delete Game</button> 
+          </li>
 
           <!--
-          <li class="role-list-item"> Add Role: </li>
+          <li class="flow-list-item"> Add Role: </li>
           {{#each all_roles}}
-            <li class="role-list-item"> <button class="add-role" data-game="{{../_id}}">{{name}}</button> </li>
+            <li class="flow-list-item"> <button class="add-role" data-game="{{../_id}}">{{name}}</button> </li>
           {{/each}}
           <li></li>
           -->
+          <li> Players:
+          {{#each players}}
+            {{username}}
+          {{/each}}
+          </li>
+
           <li> Add Role:
           {{#each all_roles}}
             <button class="add-role" data-game="{{../_id}}">{{name}}</button>
           {{/each}}
           </li>
 
-          <li> Current Roles:
+          <li>Current Roles:
           {{#each game_roles}}
             <button class="delete-role">{{name}}</button>
           {{/each}}
           </li>
 
-          <li class="flow-list-item"> Players:</li>
-          {{#each players}}
-            <li class="flow-list-item">{{username}}</li>
-          {{/each}}
-          <li></li>
+          {{> seerNight}}
         {{/each}}
       </ul>
     {{/if}}
@@ -67,12 +71,25 @@
   <li> {{username}} </li>
 </template>
 
-<!-- not used for now -->
-<template name="all-roles-template">
-  <ul>
-    Possible Roles
-    {{#each all_roles}}
-      <li> {{name}} </li>
-    {{/each}}
-  </ul>
+<template name="seerNight">
+  <li>Seer Night Actions: <br>
+  You are the Seer. Pick One player to Peek, or 2 cards from the middle. <br>
+  Players:
+  {{#each players}}
+    {{#if selectedPlayer}}
+      <button class="seer-unsel-player" data-game="{{../_id}}">{{username}}</button>
+    {{else}}
+      <button class="seer-sel-player" data-game="{{../_id}}">{{username}}</button>
+    {{/if}}
+  {{/each}}
+  {{#if selectedMiddle}}
+    <button class="seer-unsel-middle">2 cards from the middle</button>
+  {{else}}
+    <button class="seer-sel-middle">2 cards from the middle</button>
+  {{/if}}
+  <br>
+  <button class="seer-submit">Submit</button>
+  </li>
 </template>
+
+

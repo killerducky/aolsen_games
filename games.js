@@ -37,6 +37,22 @@ if (Meteor.isClient) {
       return result;
     },
   });
+  Template.seerNight.helpers({
+    // TODO: remove duplication
+    players: function() {
+      return GamePlayers.find({gameid:this._id});
+    },
+    selectedPlayer: function() {
+      // TODO: Direct object compare didn't work, why not?
+      //console.log("selectedPlayer", this, Session.get("seer-player"));
+      //var result = Session.get("seer-player") === this;
+      //console.log(result);
+      return Session.get("seer-player") && Session.get("seer-player")._id === this._id;
+    },
+    selectedMiddle: function() {
+      return Session.get("seer-player") === null;
+    },
+  });
 
   function isPlayingThisGameTest(game) {
     var gamePlayerId = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
@@ -45,10 +61,13 @@ if (Meteor.isClient) {
 
 
   Template.body.events({
-    "click .add-game": function () {
+    "click .add-game": function() {
       Meteor.call("addGame");
     },
-    "click .delete-game": function () {
+    "click .start-game": function() {
+      Meteor.call("startGame");
+    },
+    "click .delete-game": function() {
       Meteor.call("deleteGame", this._id);
     },
     "click .toggle-join": function() {
@@ -64,8 +83,19 @@ if (Meteor.isClient) {
       var gameId = $(event.currentTarget).attr("data-game");
       Meteor.call("addRole", gameId, this);
     },
-    "click .delete-role": function (event) {
+    "click .delete-role": function () {
       Meteor.call("deleteRole", this);
+    },
+  });
+  Template.seerNight.events({
+    "click .seer-sel-player": function() {
+      Session.set("seer-player", this);
+    },
+    "click .seer-sel-middle": function() {
+      Session.set("seer-player", null);
+    },
+    "click .seer-submit": function() {
+      console.log("submit", Session.get("seer-player"), this);
     },
   });
 
