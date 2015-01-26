@@ -26,6 +26,34 @@ var GamePlayer = function (gameid, userid, username) {
   };
 };
 
+var Game = function (user) {
+  this.createdAt = new Date();
+  this.text      = "Game created by "+user.username;
+  this.ownerid   = user._id;
+  this.ownername = user.username;
+  this.gameState = "Creating";
+  this.myinfo = {
+    //this.gamestate             : GAMESTATE_NONE,
+    //this.time                  : null,
+    //this.game_starter_last_seen: 0,
+    unused_roles          : [],
+    orig_werewolves       : [],
+    example_game          : true,
+    no_shuffle            : false,
+  };
+};
+
+// Fisher-Yates shuffle http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+
 if (Meteor.isClient) {
   // This code only runs on the client
   Meteor.subscribe("all_roles");
@@ -53,17 +81,14 @@ if (Meteor.isClient) {
       result = isPlayingThisGameTest(this);
       return result;
     },
-  });
-  Template.seerNight.helpers({
-    // TODO: remove duplication
-    players: function() {
-      return GamePlayers.find({gameid:this._id});
+    gameStateNight: function() { 
+      return Games.findOne({_id:this._id}).gameState === "Night"; 
     },
   });
 
   function isPlayingThisGameTest(game) {
-    var gamePlayerId = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
-    return (gamePlayerId) ? true : false;
+    var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
+    return (gamePlayer) ? true : false;
   }
 
 
@@ -89,11 +114,31 @@ if (Meteor.isClient) {
       // TODO: This method can't pass the real object, only a string gameId.
       //       Maybe use a jQuery call to find the parent object?
       var gameId = $(event.currentTarget).attr("data-game");
-      console.log(gameId);
       Meteor.call("addRole", gameId, this);
     },
     "click .delete-role": function () {
       Meteor.call("deleteRole", this);
+    },
+  });
+  Template.gameState.helpers({
+    players: function() {  // TODO: remove duplication
+      return GamePlayers.find({gameid:this._id}); 
+    },
+    gameStateNight: function() { 
+      return Games.findOne({_id:this._id}).gameState === "Night"; 
+    },
+    myRole: function() {
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      console.log("myRole", gamePlayer);
+      console.log(this._id, Meteor.userId());
+      return gamePlayer.myinfo.orig_role;
+    },
+  });
+  //Template.gameState.events({
+  //});
+  Template.seerNight.helpers({
+    players: function() {  // TODO: remove duplication
+      return GamePlayers.find({gameid:this._id}); 
     },
   });
   Template.seerNight.events({
@@ -112,7 +157,7 @@ if (Meteor.isClient) {
 Meteor.methods({
   addGame: function () {
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    var gameId = Games.insert({ createdAt: new Date(), text: "Game created by "+Meteor.user().username, owner: Meteor.userId()});
+    var gameId = Games.insert(new Game(Meteor.user()));
     Meteor.call("joinGame", gameId);
   },
   deleteGame: function (gameId) {
@@ -135,9 +180,6 @@ Meteor.methods({
     if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
     GameRoles.remove(role._id);
   },
-  startGame: function(game) {
-    console.log("startGame", game);
-  }
 });
 
 if (Meteor.isServer) {
@@ -166,4 +208,39 @@ if (Meteor.isServer) {
       AllRoles.insert({name: "Villager",     order: 999});
     }
   });
+  Meteor.methods({
+    startGame: function(game) {
+      var gameRoles, gamePlayers, unusedRoles;
+      if (true) {  // TODO: For now just clear state. Should really check and assert an error instead
+        Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": []}});
+        Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
+      }
+      gameRoles = GameRoles.find({gameid:game._id}).fetch();
+      gamePlayers = GamePlayers.find({gameid:game._id}).fetch();
+      if (gamePlayers.length < 2) {   // TODO: Fix minimum code
+        console.log("Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
+        return
+      }
+      if (gameRoles.length !== gamePlayers.length+3) { // TODO: Better error display
+        console.log("Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
+        return
+      }
+      unusedRoles = gameRoles.slice(0);
+      if (!game.myinfo.no_shuffle) {
+        shuffleArray(unusedRoles);
+      }
+      for (var i=0; i<gamePlayers.length; i++) {
+        var p = gamePlayers[i];
+        var role = unusedRoles.pop();
+        //console.log("Assign role", role);
+        GamePlayers.update({_id:p._id}, {$set: { "myinfo.curr_role": role.name, "myinfo.orig_role": role.name }});
+        if (role.name === "Werewolf") {
+          Games.update({_id:game._id}, {$push: {"myinfo.orig_werewolves": {id:p._id, username:p.username}}});
+        }
+      }
+      //console.log("unusedRoles", unusedRoles);
+      Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
+      Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
+    },
+});
 }

@@ -53,7 +53,10 @@
           {{/each}}
           </li>
 
-          {{> seerNight}}
+          {{>gameState}}
+          {{#if gameStateNight}}
+            {{> seerNight}}
+          {{/if}}
         {{/each}}
       </ul>
     {{/if}}
@@ -62,6 +65,23 @@
 
 <template name="user">
   <li> {{username}} </li>
+</template>
+
+<template name="gameState">
+  <li>State: {{gameState}}</li>
+  {{#if gameStateNight}}
+    <li>My Role: {{myRole}}</li>
+    {{#if myinfo.example_game}}
+      {{#each players}}
+        <li>{{username}} {{myinfo.orig_role}}</li>
+      {{/each}}
+      <li>Unused Roles:
+      {{#each myinfo.unused_roles}}
+        {{name}}
+      {{/each}}
+      </li>
+    {{/if}}
+  {{/if}}
 </template>
 
 <template name="seerNight">
