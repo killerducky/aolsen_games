@@ -18,7 +18,7 @@ var GamePlayer = function (gameid, userid, username) {
   this.myinfo = {
     orig_role      : null,    // rolename string
     curr_role      : null,    // rolename string
-    night_targets  : [],      // userid or index to the unused_roles array
+    night_targets  : [],      // gameplayerid or index to the unused_roles array
     night_done     : false,
     voted_for      : null,    // userid
     received_votes : 0,
@@ -71,7 +71,7 @@ if (Meteor.isClient) {
       return Games.find({});
     },
     players: function() {
-      return GamePlayers.find({gameid:this._id});
+      return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
     },
     game_roles: function() {
       return GameRoles.find({gameid:this._id}, {sort:{order:1}});
@@ -125,7 +125,7 @@ if (Meteor.isClient) {
   });
   Template.gameState.helpers({
     players: function() {  // TODO: remove duplication
-      return GamePlayers.find({gameid:this._id}); 
+      return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
     },
     gameStateNight: function() { 
       return Games.findOne({_id:this._id}).gameState === "Night"; 
@@ -142,29 +142,38 @@ if (Meteor.isClient) {
   //});
   Template.seerNight.helpers({
     players: function() {  // TODO: remove duplication
-      return GamePlayers.find({gameid:this._id}); 
+      return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
     },
     seerResults: function() {
-      return "Seer Results will go here";
+      var game = Games.findOne({_id:this._id});
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      var night_targets = gamePlayer.myinfo.night_targets;
+      if (gamePlayer.myinfo.night_done) {
+        if (night_targets.length === 2) {
+          var str = "#" + night_targets[0] + "=" + game.myinfo.unused_roles[night_targets[0]].name +
+                   " #" + night_targets[1] + "=" + game.myinfo.unused_roles[night_targets[1]].name;
+          return str;
+        } else {
+          var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
+          var str = targetPlayer.username + "=" + targetPlayer.myinfo.orig_role;
+          return str;
+        }
+      } else {
+        return "Seer Results will go here";
+      }
     },
   });
   Template.seerNight.events({
     "submit form": function(event) {
       event.preventDefault();
       result = $("input[name='player']:checked").val();
-      console.log("submit", result);
-      //TODO: Need to move this code server side only
-      //if (result.type === "middle") {
-      //  peeks = shuffleArray([0,1,2]);
-      //  GamePlayers.update({gameid:this._id}, {$set: {"myinfo.night_targets": [peeks[0], peeks[1]],
-      //                                                "myinfo.night_done"   : true}});
-      //}
+      Meteor.call("seerNightSubmit", this, Meteor.userId(), result);
     },
   });
   Template.wolfNight.helpers({
     wolfNightScript: function() {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       var game = Games.findOne({_id:this._id});
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       var orig_werewolves = game.myinfo.orig_werewolves;
       if (orig_werewolves.length === 1) {
         var i = gamePlayer.myinfo.night_targets[0];
@@ -242,20 +251,25 @@ if (Meteor.isServer) {
   });
   Meteor.methods({
     startGame: function(game) {
-      Games.update({_id:game._id}, {$set: {"gameState": "Creating"}});  // Avoid races if we are recreating the game
       var gameRoles, gamePlayers, unusedRoles;
-      if (true) {  // TODO: For now just clear state. Should really check and assert an error instead
-        Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
-      }
       gameRoles = GameRoles.find({gameid:game._id}).fetch();
       gamePlayers = GamePlayers.find({gameid:game._id}).fetch();
+
       if (gamePlayers.length < 2) {   // TODO: Fix minimum code
-        console.log("Must have at least 2 players", gameRoles.length, gamePlayers.length);
+        console.log("Error: Must have at least 2 players", gameRoles.length, gamePlayers.length);
         return
       }
       if (gameRoles.length !== gamePlayers.length+3) { // TODO: Better error display
-        console.log("Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
+        console.log("Error: Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
         return
+      }
+
+      // Reset game state
+      Games.update({_id:game._id}, {$set: {"gameState": "Creating"}});
+      Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
+      for (var pnum=0; pnum<gamePlayers.length; pnum++) {
+        var gamePlayer = gamePlayers[pnum];
+        GamePlayers.update({_id:gamePlayer._id}, new GamePlayer(game._id, gamePlayer.userid, gamePlayer.username));
       }
 
       // Assign roles
@@ -274,6 +288,11 @@ if (Meteor.isServer) {
       Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
 
       // Werewolf night logic -- no input from user required, so execute now
+      // TODO: Database writes are not reflected in the local vars...
+      //       For now just refetch them
+      gameRoles = GameRoles.find({gameid:game._id}).fetch();
+      gamePlayers = GamePlayers.find({gameid:game._id}).fetch();
+      game = Games.findOne({_id:game._id});
       var orig_werewolves = game.myinfo.orig_werewolves;
       for (var pnum=0; pnum<gamePlayers.length; pnum++) {
         var gamePlayer = gamePlayers[pnum];
@@ -284,13 +303,24 @@ if (Meteor.isServer) {
             GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_targets": [pick],
                                                              "myinfo.night_done"   : true}});
           } else {
-            GamePlayers.update({gameid:this._id}, {$set: {"myinfo.night_done"   : true}});
+            GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_done"   : true}});
           }
         }
       }
 
       // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
+    },
+    seerNightSubmit: function(game, userid, result) {
+      var night_targets;
+      if (result === "middle") {
+        var peeks = shuffleArray([0,1,2]);
+        night_targets = [peeks[0], peeks[1]];
+      } else {
+        night_targets = [result];
+      }
+      GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.night_targets": night_targets,
+                                                                   "myinfo.night_done"   : true}});
     },
   });
 }

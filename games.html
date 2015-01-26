@@ -71,7 +71,7 @@
     {{#if myinfo.example_game}}
       <li>Debug:
       {{#each players}}
-        {{username}}={{myinfo.orig_role}}
+        {{username}}={{myinfo.orig_role}},{{myinfo.night_targets}},{{myinfo.night_done}}<br>
       {{/each}}
       Unused Roles:
       {{#each myinfo.unused_roles}}
@@ -89,9 +89,9 @@
     Players:
     <form>
       {{#each players}}
-        <input type="radio" name="player" value="{type:player userid:{{this._id}}}">{{username}}
+        <input type="radio" name="player" value="{{this._id}}">{{username}}
       {{/each}}
-      <input type="radio" name="player" value="{type:middle}" checked>2 cards from the middle
+      <input type="radio" name="player" value="middle" checked>2 cards from the middle
       <input type="submit" value="Submit">
     </form>
     <br>
