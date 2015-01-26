@@ -16,11 +16,11 @@ var GamePlayer = function (gameid, userid, username) {
   this.username = username;
   // TODO: Server should only publish this to everyone after the game is over
   this.myinfo = {
-    orig_role      : null,
-    curr_role      : null,
-    night_targets  : [],
+    orig_role      : null,    // rolename string
+    curr_role      : null,    // rolename string
+    night_targets  : [],      // userid or index to the unused_roles array
     night_done     : false,
-    voted_for      : null,
+    voted_for      : null,    // userid
     received_votes : 0,
     win            : false,
   };
@@ -31,9 +31,8 @@ var Game = function (user) {
   this.text      = "Game created by "+user.username;
   this.ownerid   = user._id;
   this.ownername = user.username;
-  this.gameState = "Creating";
+  this.gameState = "Creating";   // Creating, Night, Day, Done
   this.myinfo = {
-    //this.gamestate             : GAMESTATE_NONE,
     //this.time                  : null,
     //this.game_starter_last_seen: 0,
     unused_roles          : [],
@@ -145,21 +144,30 @@ if (Meteor.isClient) {
     players: function() {  // TODO: remove duplication
       return GamePlayers.find({gameid:this._id}); 
     },
+    seerResults: function() {
+      return "Seer Results will go here";
+    },
   });
   Template.seerNight.events({
     "submit form": function(event) {
       event.preventDefault();
       result = $("input[name='player']:checked").val();
       console.log("submit", result);
+      //TODO: Need to move this code server side only
+      //if (result.type === "middle") {
+      //  peeks = shuffleArray([0,1,2]);
+      //  GamePlayers.update({gameid:this._id}, {$set: {"myinfo.night_targets": [peeks[0], peeks[1]],
+      //                                                "myinfo.night_done"   : true}});
+      //}
     },
   });
   Template.wolfNight.helpers({
     wolfNightScript: function() {
-      var gamePlayerId = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       var game = Games.findOne({_id:this._id});
       var orig_werewolves = game.myinfo.orig_werewolves;
       if (orig_werewolves.length === 1) {
-        i = Math.floor((Math.random()*3));  // random number between 0 and 2
+        var i = gamePlayer.myinfo.night_targets[0];
         var centerPeek = game.myinfo.unused_roles[i].name;
         str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
         return str;
@@ -249,20 +257,40 @@ if (Meteor.isServer) {
         console.log("Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
         return
       }
+
+      // Assign roles
       unusedRoles = gameRoles.slice(0);
       if (!game.myinfo.no_shuffle) {
         shuffleArray(unusedRoles);
       }
-      for (var i=0; i<gamePlayers.length; i++) {
-        var p = gamePlayers[i];
+      for (var pnum=0; pnum<gamePlayers.length; pnum++) {
+        var gamePlayer = gamePlayers[pnum];
         var role = unusedRoles.pop();
-        GamePlayers.update({_id:p._id}, {$set: { "myinfo.curr_role": role.name, "myinfo.orig_role": role.name }});
+        GamePlayers.update({_id:gamePlayer._id}, {$set: { "myinfo.curr_role": role.name, "myinfo.orig_role": role.name }});
         if (role.name === "Werewolf") {
-          Games.update({_id:game._id}, {$push: {"myinfo.orig_werewolves": {userid:p.userid, username:p.username}}});
+          Games.update({_id:game._id}, {$push: {"myinfo.orig_werewolves": {userid:gamePlayer.userid, username:gamePlayer.username}}});
         }
       }
       Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
+
+      // Werewolf night logic -- no input from user required, so execute now
+      var orig_werewolves = game.myinfo.orig_werewolves;
+      for (var pnum=0; pnum<gamePlayers.length; pnum++) {
+        var gamePlayer = gamePlayers[pnum];
+        if (gamePlayer.myinfo.orig_role === "Werewolf") {
+          if (orig_werewolves.length === 1) {
+            var pick = Math.floor((Math.random()*3));  // random number between 0 and 2
+            var centerPeek = game.myinfo.unused_roles[pick].name;
+            GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_targets": [pick],
+                                                             "myinfo.night_done"   : true}});
+          } else {
+            GamePlayers.update({gameid:this._id}, {$set: {"myinfo.night_done"   : true}});
+          }
+        }
+      }
+
+      // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
     },
-});
+  });
 }
