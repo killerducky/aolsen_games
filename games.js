@@ -84,6 +84,10 @@ if (Meteor.isClient) {
     gameStateNight: function() { 
       return Games.findOne({_id:this._id}).gameState === "Night"; 
     },
+    myRole: function(role) {
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      return gamePlayer && gamePlayer.myinfo.orig_role === role;
+    },
   });
 
   function isPlayingThisGameTest(game) {
@@ -129,8 +133,9 @@ if (Meteor.isClient) {
     },
     myRole: function() {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      console.log("myRole", gamePlayer);
-      console.log(this._id, Meteor.userId());
+      if (!gamePlayer) {
+        return "N/A -- You are an observer";
+      }
       return gamePlayer.myinfo.orig_role;
     },
   });
@@ -146,6 +151,25 @@ if (Meteor.isClient) {
       event.preventDefault();
       result = $("input[name='player']:checked").val();
       console.log("submit", result);
+    },
+  });
+  Template.wolfNight.helpers({
+    wolfNightScript: function() {
+      var gamePlayerId = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      var game = Games.findOne({_id:this._id});
+      var orig_werewolves = game.myinfo.orig_werewolves;
+      if (orig_werewolves.length === 1) {
+        i = Math.floor((Math.random()*3));  // random number between 0 and 2
+        var centerPeek = game.myinfo.unused_roles[i].name;
+        str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
+        return str;
+      } else {
+        str = "The Werewolves are:";
+        for (var i=0; i<orig_werewolves.length; i++) {
+          str += " " + orig_werewolves[i].username;
+        }
+        return str;
+      }
     },
   });
 
@@ -210,15 +234,15 @@ if (Meteor.isServer) {
   });
   Meteor.methods({
     startGame: function(game) {
+      Games.update({_id:game._id}, {$set: {"gameState": "Creating"}});  // Avoid races if we are recreating the game
       var gameRoles, gamePlayers, unusedRoles;
       if (true) {  // TODO: For now just clear state. Should really check and assert an error instead
-        Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": []}});
         Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
       }
       gameRoles = GameRoles.find({gameid:game._id}).fetch();
       gamePlayers = GamePlayers.find({gameid:game._id}).fetch();
       if (gamePlayers.length < 2) {   // TODO: Fix minimum code
-        console.log("Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
+        console.log("Must have at least 2 players", gameRoles.length, gamePlayers.length);
         return
       }
       if (gameRoles.length !== gamePlayers.length+3) { // TODO: Better error display
@@ -232,13 +256,11 @@ if (Meteor.isServer) {
       for (var i=0; i<gamePlayers.length; i++) {
         var p = gamePlayers[i];
         var role = unusedRoles.pop();
-        //console.log("Assign role", role);
         GamePlayers.update({_id:p._id}, {$set: { "myinfo.curr_role": role.name, "myinfo.orig_role": role.name }});
         if (role.name === "Werewolf") {
-          Games.update({_id:game._id}, {$push: {"myinfo.orig_werewolves": {id:p._id, username:p.username}}});
+          Games.update({_id:game._id}, {$push: {"myinfo.orig_werewolves": {userid:p.userid, username:p.username}}});
         }
       }
-      //console.log("unusedRoles", unusedRoles);
       Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
       Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
     },

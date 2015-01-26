@@ -55,7 +55,8 @@
 
           {{>gameState}}
           {{#if gameStateNight}}
-            {{> seerNight}}
+            {{#if myRole "Seer"}} {{> seerNight}} {{/if}}
+            {{#if myRole "Werewolf"}} {{> wolfNight}} {{/if}}
           {{/if}}
         {{/each}}
       </ul>
@@ -63,19 +64,16 @@
   </div>
 </body>
 
-<template name="user">
-  <li> {{username}} </li>
-</template>
-
 <template name="gameState">
   <li>State: {{gameState}}</li>
   {{#if gameStateNight}}
     <li>My Role: {{myRole}}</li>
     {{#if myinfo.example_game}}
+      <li>Debug:
       {{#each players}}
-        <li>{{username}} {{myinfo.orig_role}}</li>
+        {{username}}={{myinfo.orig_role}}
       {{/each}}
-      <li>Unused Roles:
+      Unused Roles:
       {{#each myinfo.unused_roles}}
         {{name}}
       {{/each}}
@@ -96,6 +94,13 @@
       <input type="radio" name="player" value="{type:middle}" checked>2 cards from the middle
       <input type="submit" value="Submit">
     </form>
+  </li>
+</template>
+
+<template name="wolfNight">
+  <li>
+    Wolf Night Actions: <br>
+    {{wolfNightScript}}
   </li>
 </template>
 
