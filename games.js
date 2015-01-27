@@ -1,8 +1,4 @@
-// Meteor
-//   users
-//   all_roles
-//   games
-//     game_roles
+// One Night Werewolf
 
 AllRoles = new Mongo.Collection("all_roles");
 Games    = new Mongo.Collection("games");
@@ -174,6 +170,9 @@ if (Meteor.isClient) {
     wolfNightScript: function() {
       var game = Games.findOne({_id:this._id});
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      if (game.gameState === "Creating" || !gamePlayer.myinfo.night_done) {
+        return "Error: Not night yet";
+      }
       var orig_werewolves = game.myinfo.orig_werewolves;
       if (orig_werewolves.length === 1) {
         var i = gamePlayer.myinfo.night_targets[0];
@@ -251,51 +250,42 @@ if (Meteor.isServer) {
   });
   Meteor.methods({
     startGame: function(game) {
-      var gameRoles, gamePlayers, unusedRoles;
-      gameRoles = GameRoles.find({gameid:game._id}).fetch();
-      gamePlayers = GamePlayers.find({gameid:game._id}).fetch();
-
-      if (gamePlayers.length < 2) {   // TODO: Fix minimum code
-        console.log("Error: Must have at least 2 players", gameRoles.length, gamePlayers.length);
+      // TODO: Fix minimum code
+      // TODO: Better error display
+      if (GamePlayers.find({gameid:game._id}).count() < 2) {
+        console.log("Error: Must have at least 2 players");
         return
       }
-      if (gameRoles.length !== gamePlayers.length+3) { // TODO: Better error display
-        console.log("Error: Must have 3 more roles than players", gameRoles.length, gamePlayers.length);
+      if (GameRoles.find({gameid:game._id}).count() !== GamePlayers.find({gameid:game._id}).count() + 3) {
+        console.log("Error: Must have 3 more roles than players");
         return
       }
 
       // Reset game state
       Games.update({_id:game._id}, {$set: {"gameState": "Creating"}});
       Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
-      for (var pnum=0; pnum<gamePlayers.length; pnum++) {
-        var gamePlayer = gamePlayers[pnum];
+      GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
         GamePlayers.update({_id:gamePlayer._id}, new GamePlayer(game._id, gamePlayer.userid, gamePlayer.username));
-      }
+      });
 
       // Assign roles
-      unusedRoles = gameRoles.slice(0);
+      var unusedRoles = GameRoles.find({gameid:game._id}).fetch();
       if (!game.myinfo.no_shuffle) {
         shuffleArray(unusedRoles);
       }
-      for (var pnum=0; pnum<gamePlayers.length; pnum++) {
-        var gamePlayer = gamePlayers[pnum];
+      GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
         var role = unusedRoles.pop();
         GamePlayers.update({_id:gamePlayer._id}, {$set: { "myinfo.curr_role": role.name, "myinfo.orig_role": role.name }});
         if (role.name === "Werewolf") {
           Games.update({_id:game._id}, {$push: {"myinfo.orig_werewolves": {userid:gamePlayer.userid, username:gamePlayer.username}}});
         }
-      }
+      });
       Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
 
       // Werewolf night logic -- no input from user required, so execute now
-      // TODO: Database writes are not reflected in the local vars...
-      //       For now just refetch them
-      gameRoles = GameRoles.find({gameid:game._id}).fetch();
-      gamePlayers = GamePlayers.find({gameid:game._id}).fetch();
-      game = Games.findOne({_id:game._id});
+      game = Games.findOne(game._id);
       var orig_werewolves = game.myinfo.orig_werewolves;
-      for (var pnum=0; pnum<gamePlayers.length; pnum++) {
-        var gamePlayer = gamePlayers[pnum];
+      GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
         if (gamePlayer.myinfo.orig_role === "Werewolf") {
           if (orig_werewolves.length === 1) {
             var pick = Math.floor((Math.random()*3));  // random number between 0 and 2
@@ -306,7 +296,7 @@ if (Meteor.isServer) {
             GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_done"   : true}});
           }
         }
-      }
+      });
 
       // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
