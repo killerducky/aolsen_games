@@ -77,8 +77,8 @@ if (Meteor.isClient) {
       result = isPlayingThisGameTest(this);
       return result;
     },
-    gameStateNight: function() { 
-      return Games.findOne({_id:this._id}).gameState === "Night"; 
+    gameStateNotCreating: function() { 
+      return Games.findOne({_id:this._id}).gameState !== "Creating"; 
     },
     myRole: function(role) {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -174,8 +174,8 @@ if (Meteor.isClient) {
     players: function() {  // TODO: remove duplication
       return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
     },
-    gameStateNight: function() { 
-      return Games.findOne({_id:this._id}).gameState === "Night"; 
+    gameStateNotCreating: function() { 
+      return Games.findOne({_id:this._id}).gameState !== "Creating"; 
     },
     myRole: function() {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -304,6 +304,25 @@ if (Meteor.isServer) {
       AllRoles.insert({name: "Villager",     order: 999});
     }
   });
+
+  // TODO: Maybe this could be a live query?
+  function checkNightDone(gameid) {
+    var game = Games.findOne(gameid);
+    if (game.gameState !== "Night") {
+      console.log("Error: Should only call this at Night", game.gameState);
+      return;
+    }
+    var nightDone = true;
+    GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
+      if (!gamePlayer.myinfo.night_done) {
+        nightDone = false;
+      }
+    });
+    if (nightDone) {
+      Games.update(gameid, {$set: {"gameState": "Day"}});
+    }
+  }
+
   Meteor.methods({
     startGame: function(game) {
       // TODO: Fix minimum code
@@ -356,6 +375,9 @@ if (Meteor.isServer) {
 
       // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
+
+      // Check if night is already done
+      checkNightDone(game._id);
     },
     seerNightSubmit: function(game, userid, target) {
       var night_targets;
@@ -371,6 +393,7 @@ if (Meteor.isServer) {
       }
       GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.night_targets": night_targets,
                                                                    "myinfo.night_done"   : true}});
+      checkNightDone(game._id);
     },
     robberNightSubmit: function(game, userid, target) {
       if (GamePlayers.findOne({gameid:game._id, userid:userid}).myinfo.night_done) {
@@ -392,6 +415,7 @@ if (Meteor.isServer) {
           "myinfo.night_done"   : true}});
         GamePlayers.update(target, {$set: {"myinfo.curr_role" : robberRole}});
       }
+      checkNightDone(game._id);
     },
   });
 }

@@ -54,7 +54,7 @@
           </li>
 
           {{>gameState}}
-          {{#if gameStateNight}}
+          {{#if gameStateNotCreating}}
             {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
             {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
             {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
@@ -67,7 +67,7 @@
 
 <template name="gameState">
   <li>State: {{gameState}}</li>
-  {{#if gameStateNight}}
+  {{#if gameStateNotCreating}}
     <li>My Role: {{myRole}}</li>
     {{#if myinfo.example_game}}
       <li>Debug:
