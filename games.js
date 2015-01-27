@@ -91,6 +91,56 @@ if (Meteor.isClient) {
     return (gamePlayer) ? true : false;
   }
 
+  function nightResult(gameid, gamePlayerId) {
+    var game = Games.findOne(gameid);
+    var gamePlayer = GamePlayers.findOne(gamePlayerId);
+    var night_targets = gamePlayer.myinfo.night_targets;
+    var str;
+    if (gamePlayer.myinfo.orig_role == "Seer") {
+      if (gamePlayer.myinfo.night_done) {
+        if (night_targets.length === 2) {
+          str = "You peeked at 2 of the 3 middle cards." +
+                   " #" + night_targets[0] + "=" + game.myinfo.unused_roles[night_targets[0]].name +
+                   " #" + night_targets[1] + "=" + game.myinfo.unused_roles[night_targets[1]].name;
+        } else {
+          var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
+          str = "You peeked at " + targetPlayer.username + " and saw he was the " + targetPlayer.myinfo.orig_role;
+        }
+      } else {
+        str = "Seer results will go here";
+      }
+    } else if (gamePlayer.myinfo.orig_role == "Robber") {
+      if (gamePlayer.myinfo.night_done) {
+        if (night_targets.length === 0) {
+          str = "Did not rob";
+        } else {
+          var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
+          str = targetPlayer.username + " became the Robber and you became the " + gamePlayer.myinfo.night_result;
+        }
+      } else {
+        str = "Robber results will go here";
+      }
+    } else if (gamePlayer.myinfo.orig_role == "Werewolf") {
+      if (game.gameState === "Creating" || !gamePlayer.myinfo.night_done) {
+        str = "Error: Not night yet";
+      }
+      var orig_werewolves = game.myinfo.orig_werewolves;
+      if (orig_werewolves.length === 1) {
+        var i = gamePlayer.myinfo.night_targets[0];
+        var centerPeek = game.myinfo.unused_roles[i].name;
+        str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
+      } else {
+        str = "The Werewolves are:";
+        for (var i=0; i<orig_werewolves.length; i++) {
+          str += " " + orig_werewolves[i].username;
+        }
+      }
+    } else {
+      str = "other";
+    }
+    return str;
+  }
+
 
   Template.body.events({
     "click .add-game": function() {
@@ -134,6 +184,9 @@ if (Meteor.isClient) {
       }
       return gamePlayer.myinfo.orig_role;
     },
+    debugResults: function() {
+      return nightResult(this.gameid, this._id);
+    }
   });
   //Template.gameState.events({
   //});
@@ -142,22 +195,8 @@ if (Meteor.isClient) {
       return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
     },
     seerResults: function() {
-      var game = Games.findOne({_id:this._id});
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      var night_targets = gamePlayer.myinfo.night_targets;
-      if (gamePlayer.myinfo.night_done) {
-        if (night_targets.length === 2) {
-          var str = "#" + night_targets[0] + "=" + game.myinfo.unused_roles[night_targets[0]].name +
-                   " #" + night_targets[1] + "=" + game.myinfo.unused_roles[night_targets[1]].name;
-          return str;
-        } else {
-          var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          var str = targetPlayer.username + "=" + targetPlayer.myinfo.orig_role;
-          return str;
-        }
-      } else {
-        return "Seer results will go here";
-      }
+      return nightResult(this._id, gamePlayer._id);
     },
   });
   Template.seerNight.events({
@@ -172,21 +211,8 @@ if (Meteor.isClient) {
       return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
     },
     robberResults: function() {
-      var game = Games.findOne({_id:this._id});
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      var night_targets = gamePlayer.myinfo.night_targets;
-      if (gamePlayer.myinfo.night_done) {
-        if (night_targets.length === 0) {
-          var str = "Did not rob";
-          return str;
-        } else {
-          var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          var str = targetPlayer.username + " became the Robber and you became the " + gamePlayer.myinfo.night_result;
-          return str;
-        }
-      } else {
-        return "Robber results will go here";
-      }
+      return nightResult(this._id, gamePlayer._id);
     },
   });
   Template.robberNight.events({
@@ -359,14 +385,12 @@ if (Meteor.isServer) {
         // swap robberRole and targetRole
         var robberRole = GamePlayers.findOne({gameid:game._id, userid:userid}).myinfo.curr_role;
         var targetRole = GamePlayers.findOne(target).myinfo.curr_role;
-        console.log("rns before", robberRole, targetRole);
         GamePlayers.update({gameid:game._id, userid:userid}, {$set: {
           "myinfo.curr_role"    : targetRole,
           "myinfo.night_targets": [target],
           "myinfo.night_result" : targetRole,
           "myinfo.night_done"   : true}});
         GamePlayers.update(target, {$set: {"myinfo.curr_role" : robberRole}});
-        console.log("rns after", robberRole, targetRole);
       }
     },
   });

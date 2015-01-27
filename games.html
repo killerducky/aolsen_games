@@ -72,7 +72,7 @@
     {{#if myinfo.example_game}}
       <li>Debug:
       {{#each players}}
-        {{username}}={{myinfo.orig_role}},{{myinfo.night_targets}},{{myinfo.night_done}}<br>
+        <li>{{username}}={{myinfo.orig_role}}={{debugResults}}</li>
       {{/each}}
       Unused Roles:
       {{#each myinfo.unused_roles}}
@@ -123,5 +123,3 @@
     {{wolfNightScript}}
   </li>
 </template>
-
-
