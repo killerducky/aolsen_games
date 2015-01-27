@@ -55,8 +55,9 @@
 
           {{>gameState}}
           {{#if gameStateNight}}
-            {{#if myRole "Seer"}} {{> seerNight}} {{/if}}
-            {{#if myRole "Werewolf"}} {{> wolfNight}} {{/if}}
+            {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
+            {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
+            {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
           {{/if}}
         {{/each}}
       </ul>
@@ -96,6 +97,23 @@
     </form>
     <br>
     {{seerResults}}
+  </li>
+</template>
+
+<template name="robberNight">
+  <li>
+    Robber Night Actions: <br>
+    You are the Robber. Pick One player to Rob, or choose "Do not rob". <br>
+    Players:
+    <form>
+      {{#each players}}
+        <input type="radio" name="player" value="{{this._id}}">{{username}}
+      {{/each}}
+      <input type="radio" name="player" value="nobody" checked>Do not rob
+      <input type="submit" value="Submit">
+    </form>
+    <br>
+    {{robberResults}}
   </li>
 </template>
 

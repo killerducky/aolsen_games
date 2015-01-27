@@ -15,6 +15,7 @@ var GamePlayer = function (gameid, userid, username) {
     orig_role      : null,    // rolename string
     curr_role      : null,    // rolename string
     night_targets  : [],      // gameplayerid or index to the unused_roles array
+    night_result   : null,    // A string describing what the player did at night. Used by Robber.
     night_done     : false,
     voted_for      : null,    // userid
     received_votes : 0,
@@ -137,8 +138,8 @@ if (Meteor.isClient) {
   //Template.gameState.events({
   //});
   Template.seerNight.helpers({
-    players: function() {  // TODO: remove duplication
-      return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
+    players: function() {
+      return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
     },
     seerResults: function() {
       var game = Games.findOne({_id:this._id});
@@ -155,7 +156,7 @@ if (Meteor.isClient) {
           return str;
         }
       } else {
-        return "Seer Results will go here";
+        return "Seer results will go here";
       }
     },
   });
@@ -164,6 +165,35 @@ if (Meteor.isClient) {
       event.preventDefault();
       result = $("input[name='player']:checked").val();
       Meteor.call("seerNightSubmit", this, Meteor.userId(), result);
+    },
+  });
+  Template.robberNight.helpers({
+    players: function() {
+      return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
+    },
+    robberResults: function() {
+      var game = Games.findOne({_id:this._id});
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      var night_targets = gamePlayer.myinfo.night_targets;
+      if (gamePlayer.myinfo.night_done) {
+        if (night_targets.length === 0) {
+          var str = "Did not rob";
+          return str;
+        } else {
+          var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
+          var str = targetPlayer.username + " became the Robber and you became the " + gamePlayer.myinfo.night_result;
+          return str;
+        }
+      } else {
+        return "Robber results will go here";
+      }
+    },
+  });
+  Template.robberNight.events({
+    "submit form": function(event) {
+      event.preventDefault();
+      result = $("input[name='player']:checked").val();
+      Meteor.call("robberNightSubmit", this, Meteor.userId(), result);
     },
   });
   Template.wolfNight.helpers({
@@ -301,16 +331,43 @@ if (Meteor.isServer) {
       // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
     },
-    seerNightSubmit: function(game, userid, result) {
+    seerNightSubmit: function(game, userid, target) {
       var night_targets;
-      if (result === "middle") {
+      if (GamePlayers.findOne({gameid:game._id, userid:userid}).myinfo.night_done) {
+        console.log("Error: sns Cannot do more than once");
+        return;
+      }
+      if (target === "middle") {
         var peeks = shuffleArray([0,1,2]);
         night_targets = [peeks[0], peeks[1]];
       } else {
-        night_targets = [result];
+        night_targets = [target];
       }
       GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.night_targets": night_targets,
                                                                    "myinfo.night_done"   : true}});
+    },
+    robberNightSubmit: function(game, userid, target) {
+      if (GamePlayers.findOne({gameid:game._id, userid:userid}).myinfo.night_done) {
+        console.log("Error: rns Cannot do more than once");
+        return;
+      }
+      if (target === "nobody") {
+        GamePlayers.update({gameid:game._id, userid:userid}, {$set: {
+          "myinfo.night_targets": [],
+          "myinfo.night_done"   : true}});
+      } else {
+        // swap robberRole and targetRole
+        var robberRole = GamePlayers.findOne({gameid:game._id, userid:userid}).myinfo.curr_role;
+        var targetRole = GamePlayers.findOne(target).myinfo.curr_role;
+        console.log("rns before", robberRole, targetRole);
+        GamePlayers.update({gameid:game._id, userid:userid}, {$set: {
+          "myinfo.curr_role"    : targetRole,
+          "myinfo.night_targets": [target],
+          "myinfo.night_result" : targetRole,
+          "myinfo.night_done"   : true}});
+        GamePlayers.update(target, {$set: {"myinfo.curr_role" : robberRole}});
+        console.log("rns after", robberRole, targetRole);
+      }
     },
   });
 }
