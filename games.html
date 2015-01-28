@@ -23,7 +23,7 @@
         {{#each games}}
           <li>Game: {{text}}
           Moderator: TBD
-          State: TBD
+          State: {{gameState}}
           Day Timer: TBD
           Players: TBD
           Observers: TBD
@@ -53,11 +53,15 @@
           {{/each}}
           </li>
 
-          {{>gameState}}
+          {{>fullGameState}}
           {{#if gameStateNotCreating}}
             {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
             {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
             {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
+          {{/if}}
+
+          {{#if gameStateTest "eq" "Day"}}
+            <li>{{>vote}}</li>
           {{/if}}
         {{/each}}
       </ul>
@@ -65,7 +69,7 @@
   </div>
 </body>
 
-<template name="gameState">
+<template name="fullGameState">
   <li>State: {{gameState}}</li>
   {{#if gameStateNotCreating}}
     <li>My Role: {{myRole}}</li>
@@ -88,9 +92,9 @@
     Seer Night Actions: <br>
     You are the Seer. Pick One player to Peek, or 2 cards from the middle. <br>
     Players:
-    <form>
-      {{#each players}}
-        <input type="radio" name="player" value="{{this._id}}">{{username}}
+    <form id="seerform">
+      {{#each otherPlayers}}
+        {{>pickPlayer}}
       {{/each}}
       <input type="radio" name="player" value="middle" checked>2 cards from the middle
       <input type="submit" value="Submit">
@@ -105,9 +109,9 @@
     Robber Night Actions: <br>
     You are the Robber. Pick One player to Rob, or choose "Do not rob". <br>
     Players:
-    <form>
-      {{#each players}}
-        <input type="radio" name="player" value="{{this._id}}">{{username}}
+    <form id="robberform">
+      {{#each otherPlayers}}
+        {{>pickPlayer}}
       {{/each}}
       <input type="radio" name="player" value="nobody" checked>Do not rob
       <input type="submit" value="Submit">
@@ -119,7 +123,23 @@
 
 <template name="wolfNight">
   <li>
-    Wolf Night Actions: <br>
+    Wolf Night Actions:<br>
     {{wolfNightScript}}
   </li>
+</template>
+
+<template name="vote">
+  <form id="voteform">
+    Vote:<br>
+    {{#each otherPlayers}}
+      <!-- {{>pickPlayer}} can't figure out multiple forms, do this instead -->
+      <input type="radio" name="voteplayer" value="{{this._id}}">{{username}}
+    {{/each}}
+    <input type="radio" name="voteplayer" value="nobody" checked>Continue Daytime
+    <input type="submit" value="Submit">
+  </form>
+</template>
+
+<template name="pickPlayer">
+  <input type="radio" name="player" value="{{this._id}}">{{username}}
 </template>

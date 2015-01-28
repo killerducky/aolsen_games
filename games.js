@@ -17,7 +17,7 @@ var GamePlayer = function (gameid, userid, username) {
     night_targets  : [],      // gameplayerid or index to the unused_roles array
     night_result   : null,    // A string describing what the player did at night. Used by Robber.
     night_done     : false,
-    voted_for      : null,    // userid
+    voted_for      : null,    // gameplayerid
     received_votes : 0,
     win            : false,
   };
@@ -57,6 +57,12 @@ if (Meteor.isClient) {
   Meteor.subscribe("game_players");
   Meteor.subscribe("game_roles");
   Meteor.subscribe("directory");
+  UI.registerHelper("players", function() {
+    return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
+  });
+  UI.registerHelper("otherPlayers", function() {
+    return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
+  });
   Template.body.helpers({
     users: function() {
       return Meteor.users.find({});
@@ -67,9 +73,6 @@ if (Meteor.isClient) {
     games: function() {
       return Games.find({});
     },
-    players: function() {
-      return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
-    },
     game_roles: function() {
       return GameRoles.find({gameid:this._id}, {sort:{order:1}});
     },
@@ -79,6 +82,16 @@ if (Meteor.isClient) {
     },
     gameStateNotCreating: function() { 
       return Games.findOne({_id:this._id}).gameState !== "Creating"; 
+    },
+    gameStateTest: function(op, value) {
+      // TODO: This is horrible must be a better way, maybe pass in a query object?
+      if (op === "eq") {
+        return Games.findOne({_id:this._id}).gameState === value;
+      } else if (op === "ne") {
+        return Games.findOne({_id:this._id}).gameState !== value;
+      } else {
+        throw new Meteor.Error("Internal error");
+      }
     },
     myRole: function(role) {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -170,10 +183,7 @@ if (Meteor.isClient) {
       Meteor.call("deleteRole", this);
     },
   });
-  Template.gameState.helpers({
-    players: function() {  // TODO: remove duplication
-      return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
-    },
+  Template.fullGameState.helpers({
     gameStateNotCreating: function() { 
       return Games.findOne({_id:this._id}).gameState !== "Creating"; 
     },
@@ -188,12 +198,9 @@ if (Meteor.isClient) {
       return nightResult(this.gameid, this._id);
     }
   });
-  //Template.gameState.events({
+  //Template.fullGameState.events({
   //});
   Template.seerNight.helpers({
-    players: function() {
-      return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
-    },
     seerResults: function() {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       return nightResult(this._id, gamePlayer._id);
@@ -202,14 +209,11 @@ if (Meteor.isClient) {
   Template.seerNight.events({
     "submit form": function(event) {
       event.preventDefault();
-      result = $("input[name='player']:checked").val();
+      var result = $("input[name='player']:checked").val();
       Meteor.call("seerNightSubmit", this, Meteor.userId(), result);
     },
   });
   Template.robberNight.helpers({
-    players: function() {
-      return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
-    },
     robberResults: function() {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       return nightResult(this._id, gamePlayer._id);
@@ -218,7 +222,7 @@ if (Meteor.isClient) {
   Template.robberNight.events({
     "submit form": function(event) {
       event.preventDefault();
-      result = $("input[name='player']:checked").val();
+      var result = $("input[name='player']:checked").val();
       Meteor.call("robberNightSubmit", this, Meteor.userId(), result);
     },
   });
@@ -242,6 +246,13 @@ if (Meteor.isClient) {
         }
         return str;
       }
+    },
+  });
+  Template.vote.events({
+    "submit form": function(event) {
+      event.preventDefault();
+      var result = $("input[name='voteplayer']:checked").val();
+      Meteor.call("voteSubmit", this, Meteor.userId(), result);
     },
   });
 
@@ -309,17 +320,29 @@ if (Meteor.isServer) {
   function checkNightDone(gameid) {
     var game = Games.findOne(gameid);
     if (game.gameState !== "Night") {
-      console.log("Error: Should only call this at Night", game.gameState);
+      throw new Meteor.Error("Should only call this at Night");
       return;
     }
     var nightDone = true;
     GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
       if (!gamePlayer.myinfo.night_done) {
         nightDone = false;
+        return;
       }
     });
     if (nightDone) {
       Games.update(gameid, {$set: {"gameState": "Day"}});
+    }
+  }
+  function checkDayDone(gameid) {
+    var game = Games.findOne(gameid);
+    if (game.gameState !== "Day") {
+      throw new Meteor.Error("Should only call this at Night");
+    }
+    var numVoted    = GamePlayers.find({gameid:gameid, "myinfo.voted_for":{$ne:null}}).count();
+    var numNotVoted = GamePlayers.find({gameid:gameid, "myinfo.voted_for":null}).count();
+    if (numNotVoted === 0) {
+      Games.update(gameid, {$set: {"gameState": "Done"}});
     }
   }
 
@@ -416,6 +439,18 @@ if (Meteor.isServer) {
         GamePlayers.update(target, {$set: {"myinfo.curr_role" : robberRole}});
       }
       checkNightDone(game._id);
+    },
+    voteSubmit: function(game, userid, target) {
+      if (game.gameState !== "Day") {
+        console.log("Error: Can only vote during Day");
+        return;
+      }
+      if (target === "nobody") {
+        GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.voted_for" : null }});
+      } else {
+        GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.voted_for" : target }});
+      }
+      checkDayDone(game._id);
     },
   });
 }
