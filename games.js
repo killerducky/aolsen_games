@@ -29,6 +29,7 @@ var Game = function (user) {
   this.ownerid   = user._id;
   this.ownername = user.username;
   this.gameState = "Creating";   // Creating, Night, Day, Done
+  this.mostVotedPlayers = [];    // gameplayerid
   this.myinfo = {
     //this.time                  : null,
     //this.game_starter_last_seen: 0,
@@ -62,6 +63,10 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("otherPlayers", function() {
     return GamePlayers.find({gameid:this._id, userid:{$ne:Meteor.userId()}}, {sort:{username:1}});
+  });
+  UI.registerHelper("gamePlayerId_username", function(gamePlayerId) {
+    var gamePlayer = GamePlayers.findOne(gamePlayerId);
+    return gamePlayer ? gamePlayer.username : null;
   });
   Template.body.helpers({
     users: function() {
@@ -128,7 +133,7 @@ if (Meteor.isClient) {
           str = "Did not rob";
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str = targetPlayer.username + " became the Robber and you became the " + gamePlayer.myinfo.night_result;
+          str = "You became the " + gamePlayer.myinfo.night_result + " and " + targetPlayer.username + " became the Robber";
         }
       } else {
         str = "Robber results will go here";
@@ -340,9 +345,26 @@ if (Meteor.isServer) {
       throw new Meteor.Error("Should only call this at Night");
     }
     var numVoted    = GamePlayers.find({gameid:gameid, "myinfo.voted_for":{$ne:null}}).count();
-    var numNotVoted = GamePlayers.find({gameid:gameid, "myinfo.voted_for":null}).count();
+    var numNotVoted = GamePlayers.find({gameid:gameid, "myinfo.voted_for":     null }).count();
+    // if (dayTimerExpired ? numVoted > 0 : numNotVoted === 0)
     if (numNotVoted === 0) {
       Games.update(gameid, {$set: {"gameState": "Done"}});
+      GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
+        GamePlayers.update(gamePlayer.myinfo.voted_for, {$inc:{"myinfo.received_votes":1}});
+      });
+      var mostVotes = 0;
+      var mostVotedPlayers = [];
+      GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
+        if (gamePlayer.myinfo.received_votes > mostVotes) {
+          mostVotes = gamePlayer.myinfo.received_votes;
+          mostVotedPlayers = [gamePlayer._id];
+        } else if (gamePlayer.myinfo.received_votes === mostVotes) {
+          mostVotedPlayers.push(gamePlayer._id);
+        }
+        if (mostVotes === 1) {
+          mostVotedPlayers = []; // It takes at least 2 votes to kill
+        }
+      });
     }
   }
 

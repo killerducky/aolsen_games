@@ -22,11 +22,11 @@
         <li>List of Games</li>
         {{#each games}}
           <li>Game: {{text}}
-          Moderator: TBD
           State: {{gameState}}
+          <!-- Moderator: TBD
           Day Timer: TBD
           Players: TBD
-          Observers: TBD
+          Observers: TBD -->
           </li>
 
           <li> 
@@ -74,10 +74,30 @@
   {{#if gameStateNotCreating}}
     <li>My Role: {{myRole}}</li>
     {{#if myinfo.example_game}}
-      <li>Debug:
+      <li><table>
+      <tr>
+        <th>Name</th>
+        <th>Original Role</th>
+        <th>Final Role</th>
+        <th>Night Actions</th>
+        <th>Voted For</th>
+        <th>Votes Against</th>
+        <th>Result</th>
+      </tr>
       {{#each players}}
-        <li>{{username}}={{myinfo.orig_role}}={{debugResults}}</li>
+        <tr>
+          <td>{{username}}</td>
+          <td>{{myinfo.orig_role}}</td>
+          <td>{{myinfo.curr_role}}</td>
+          <td>{{debugResults}}</td>
+          <td>{{gamePlayerId_username myinfo.voted_for}}</td>
+          <td>{{myinfo.received_votes}}</td>
+          <td>TBD {{win}}</td>
+        </tr>
       {{/each}}
+      {{mostVotedPlayers}}
+      </table></li>
+      <li>
       Unused Roles:
       {{#each myinfo.unused_roles}}
         {{name}}
