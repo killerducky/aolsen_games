@@ -1,6 +1,7 @@
 <!-- games.html -->
 <head>
   <title>One Night Werewolf</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 
 <body>
@@ -24,9 +25,7 @@
             <th>Roles</th>
             <th>Day Timer</th>
             <th>Num Players</th>
-            <th></th> <!-- join/leave -->
-            <th></th> <!-- start -->
-            <th></th> <!-- delete -->
+            <th></th> <!-- action buttons -->
           </tr>
           {{#each games}}
             <tr>
@@ -48,9 +47,11 @@
                   <span class="glyphicon glyphicon-plus"></span>
                   </button>
                 {{/if}}
+                {{#if isOwnerThisGame}}
+                  <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
+                  <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
+                {{/if}}
               </td>
-              <td><button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button></td>
-              <td><button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button></td>
             </tr>
           {{/each}}
         </table>
@@ -72,11 +73,15 @@
   {{/each}}
   </li>
 
-  <li> Add Role:
-  {{#each all_roles}}
-    <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
-  {{/each}}
-  </li>
+  {{#if isOwnerThisGame}}
+  {{#if gameStateTest "eq" "Creating"}}
+    <li> Add Role:
+    {{#each all_roles}}
+      <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+    {{/each}}
+    </li>
+  {{/if}}
+  {{/if}}
 
   <li>Current Roles:
   {{#each game_roles}}
@@ -85,7 +90,8 @@
   </li>
 
   {{>fullGameState}}
-  {{#if gameStateNotCreating}}
+
+  {{#if gameStateTest "eq" "Night"}}
     {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
     {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
     {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
@@ -99,27 +105,28 @@
 <template name="fullGameState">
   <li>State: {{gameState}}</li>
   {{#if gameStateNotCreating}}
-    <li>My Role: {{myRole}}</li>
-    {{#if myinfo.example_game}}
+    <li>Your Role: {{myRole}}</li>
+    <li>Your Night Action: {{myDebugResults}}</li>
+    {{#if showAllInfo}}
       <li><table class="table table-bordered">
         <tr>
-          <th>Name</th>
-          <th>Original Role</th>
-          <th>Final Role</th>
-          <th>Night Actions</th>
-          <th>Voted For</th>
-          <th>Votes Against</th>
-          <th>Result</th>
+          <th width="10%">Name</th>
+          <th width="10%">Original Role</th>
+          <th width="10%">Final Role</th>
+          <th width="20%">Night Actions</th>
+          <th width="10%">Voted For</th>
+          <th width="5%">V A</th>
+          <th width="5%">Result</th>
         </tr>
         {{#each players}}
           <tr>
-            <td>{{username}}</td>
-            <td>{{myinfo.orig_role}}</td>
-            <td>{{myinfo.curr_role}}</td>
-            <td>{{debugResults}}</td>
-            <td>{{gamePlayerId_username myinfo.voted_for}}</td>
-            <td>{{myinfo.received_votes}}</td>
-            <td>TBD {{win}}</td>
+            <td width="10%">{{username}}</td>
+            <td width="10%">{{myinfo.orig_role}}</td>
+            <td width="10%">{{myinfo.curr_role}}</td>
+            <td width="20%">{{debugResults}}</td>
+            <td width="10%">{{gamePlayerId_username myinfo.voted_for}}</td>
+            <td width="5%">{{myinfo.received_votes}}</td>
+            <td width="5%">TBD {{win}}</td>
           </tr>
         {{/each}}
         {{mostVotedPlayers}}
@@ -147,7 +154,6 @@
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <br>
-    {{seerResults}}
   </li>
 </template>
 
@@ -164,7 +170,6 @@
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <br>
-    {{robberResults}}
   </li>
 </template>
 
@@ -189,3 +194,4 @@
 <template name="pickPlayer">
   <input type="radio" name="player" value="{{this._id}}">{{username}}
 </template>
+

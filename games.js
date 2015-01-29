@@ -38,7 +38,7 @@ var Game = function (user) {
     //this.game_starter_last_seen: 0,
     unused_roles          : [],
     orig_werewolves       : [],
-    example_game          : true,
+    example_game          : false,
     no_shuffle            : false,
   };
 };
@@ -89,6 +89,15 @@ if (Meteor.isClient) {
     else if (this.name === "Villager") { return "VL"; }
     else { return "?"; }
   });
+  UI.registerHelper("isOwnerThisGame", function() {
+    return this.ownerid === Meteor.userId();
+  });
+  UI.registerHelper("showAllInfo", function() {
+    return (this.example_game || this.ownerid === Meteor.userId() || this.gameState === "Done");
+  });
+  UI.registerHelper("myDebugResults", function() {
+    return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
+  });
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
     return (gamePlayer) ? true : false;
@@ -97,6 +106,9 @@ if (Meteor.isClient) {
   function nightResult(gameid, gamePlayerId) {
     var game = Games.findOne(gameid);
     var gamePlayer = GamePlayers.findOne(gamePlayerId);
+    if (!gamePlayer) {
+      return "...";
+    }
     var night_targets = gamePlayer.myinfo.night_targets;
     var str;
     if (gamePlayer.myinfo.orig_role == "Seer") {
@@ -141,7 +153,7 @@ if (Meteor.isClient) {
         }
       }
     } else {
-      str = "other";
+      str = "...";
     }
     return str;
   }
@@ -165,7 +177,13 @@ if (Meteor.isClient) {
       Meteor.call("addGame");
     },
     "click .start-game": function() {
-      Meteor.call("startGame", this);
+      // Start or Reset game based on current game state
+      // TODO: Icon should switch to a recycle instead of play
+      if (this.gameState === "Creating") {
+        Meteor.call("startGame", this);
+      } else {
+        Meteor.call("resetGame", this);
+      }
     },
     "click .delete-game": function() {
       Meteor.call("deleteGame", this._id);
@@ -385,9 +403,25 @@ if (Meteor.isServer) {
   }
 
   Meteor.methods({
+    resetGame: function(game) {
+      if (game.ownerid !== Meteor.userId()) {
+        console.log("Error: Only owner can do this", game.ownerid, Meteor.userId());
+        return;
+      }
+      // Reset game state
+      Games.update({_id:game._id}, {$set: {"gameState": "Creating"}});
+      Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
+      GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
+        GamePlayers.update({_id:gamePlayer._id}, new GamePlayer(game._id, gamePlayer.userid, gamePlayer.username));
+      });
+    },
     startGame: function(game) {
       // TODO: Fix minimum code
       // TODO: Better error display
+      if (game.ownerid !== Meteor.userId()) {
+        console.log("Error: Only owner can do this", game.ownerid, Meteor.userId());
+        return;
+      }
       if (GamePlayers.find({gameid:game._id}).count() < 2) {
         console.log("Error: Must have at least 2 players");
         return
@@ -398,6 +432,7 @@ if (Meteor.isServer) {
       }
 
       // Reset game state
+      Meteor.call("resetGame", game);
       Games.update({_id:game._id}, {$set: {"gameState": "Creating"}});
       Games.update({_id:game._id}, {$set: {"myinfo.orig_werewolves": []}});
       GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
