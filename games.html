@@ -10,58 +10,54 @@
       {{> loginButtons}}
     </header>
 
-    <ul>
-      <li class="flow-list-item">Users</li>
+    <ul class="list-inline">
+      <li>Users</li>
       {{#each users}}
-        <li class="flow-list-item"> {{username}} </li>
+        <li> {{username}} </li>
       {{/each}}
     </ul>
     {{#if currentUser}}
-      <button class="add-game">Create New Game</button>
-      <ul>
-        <li>List of Games</li>
+      <ul class="list-unstyled">
+        <li><table class="table table-bordered">
+          <tr>
+            <th>State</th>
+            <th>Roles</th>
+            <th>Day Timer</th>
+            <th>Num Players</th>
+            <th></th> <!-- join/leave -->
+            <th></th> <!-- start -->
+            <th></th> <!-- delete -->
+          </tr>
+          {{#each games}}
+            <tr>
+              <td>{{gameState}}</td>
+              <td>
+              {{#each game_roles}}
+                {{shortRoleName}}
+              {{/each}}
+              </td>
+              <td>None</td>
+              <td>TBD</td>
+              <td>
+                {{#if isPlayingThisGame}}
+                  <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
+                  <span class="glyphicon glyphicon-minus"></span>
+                  </button>
+                {{else}}
+                  <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
+                  <span class="glyphicon glyphicon-plus"></span>
+                  </button>
+                {{/if}}
+              </td>
+              <td><button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button></td>
+              <td><button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button></td>
+            </tr>
+          {{/each}}
+        </table>
+        <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button></li>
         {{#each games}}
-          <li>Game: {{text}}
-          State: {{gameState}}
-          <!-- Moderator: TBD
-          Day Timer: TBD
-          Players: TBD
-          Observers: TBD -->
-          </li>
-
-          <li> 
-          <button class="toggle-join"> {{#if isPlayingThisGame}}Leave Game{{else}}Join Game{{/if}} </button>
-          <button class="start-game">Start Game</button> 
-          <button class="delete-game">Delete Game</button> 
-          </li>
-
-          <li> Players:
-          {{#each players}}
-            {{username}}
-          {{/each}}
-          </li>
-
-          <li> Add Role:
-          {{#each all_roles}}
-            <button class="add-role" data-game="{{../_id}}">{{name}}</button>
-          {{/each}}
-          </li>
-
-          <li>Current Roles:
-          {{#each game_roles}}
-            <button class="delete-role">{{name}}</button>
-          {{/each}}
-          </li>
-
-          {{>fullGameState}}
-          {{#if gameStateNotCreating}}
-            {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
-            {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
-            {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
-          {{/if}}
-
-          {{#if gameStateTest "eq" "Day"}}
-            <li>{{>vote}}</li>
+          {{#if isPlayingThisGame}}
+            {{>showGame}}
           {{/if}}
         {{/each}}
       </ul>
@@ -69,33 +65,64 @@
   </div>
 </body>
 
+<template name="showGame">
+  <li> Players:
+  {{#each players}}
+    {{username}}
+  {{/each}}
+  </li>
+
+  <li> Add Role:
+  {{#each all_roles}}
+    <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+  {{/each}}
+  </li>
+
+  <li>Current Roles:
+  {{#each game_roles}}
+    <button class="delete-role btn btn-default">{{name}}</button>
+  {{/each}}
+  </li>
+
+  {{>fullGameState}}
+  {{#if gameStateNotCreating}}
+    {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
+    {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
+    {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
+  {{/if}}
+
+  {{#if gameStateTest "eq" "Day"}}
+    <li>{{>vote}}</li>
+  {{/if}}
+</template>
+
 <template name="fullGameState">
   <li>State: {{gameState}}</li>
   {{#if gameStateNotCreating}}
     <li>My Role: {{myRole}}</li>
     {{#if myinfo.example_game}}
-      <li><table>
-      <tr>
-        <th>Name</th>
-        <th>Original Role</th>
-        <th>Final Role</th>
-        <th>Night Actions</th>
-        <th>Voted For</th>
-        <th>Votes Against</th>
-        <th>Result</th>
-      </tr>
-      {{#each players}}
+      <li><table class="table table-bordered">
         <tr>
-          <td>{{username}}</td>
-          <td>{{myinfo.orig_role}}</td>
-          <td>{{myinfo.curr_role}}</td>
-          <td>{{debugResults}}</td>
-          <td>{{gamePlayerId_username myinfo.voted_for}}</td>
-          <td>{{myinfo.received_votes}}</td>
-          <td>TBD {{win}}</td>
+          <th>Name</th>
+          <th>Original Role</th>
+          <th>Final Role</th>
+          <th>Night Actions</th>
+          <th>Voted For</th>
+          <th>Votes Against</th>
+          <th>Result</th>
         </tr>
-      {{/each}}
-      {{mostVotedPlayers}}
+        {{#each players}}
+          <tr>
+            <td>{{username}}</td>
+            <td>{{myinfo.orig_role}}</td>
+            <td>{{myinfo.curr_role}}</td>
+            <td>{{debugResults}}</td>
+            <td>{{gamePlayerId_username myinfo.voted_for}}</td>
+            <td>{{myinfo.received_votes}}</td>
+            <td>TBD {{win}}</td>
+          </tr>
+        {{/each}}
+        {{mostVotedPlayers}}
       </table></li>
       <li>
       Unused Roles:
@@ -117,7 +144,7 @@
         {{>pickPlayer}}
       {{/each}}
       <input type="radio" name="player" value="middle" checked>2 cards from the middle
-      <input type="submit" value="Submit">
+      <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <br>
     {{seerResults}}
@@ -134,7 +161,7 @@
         {{>pickPlayer}}
       {{/each}}
       <input type="radio" name="player" value="nobody" checked>Do not rob
-      <input type="submit" value="Submit">
+      <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <br>
     {{robberResults}}
@@ -152,11 +179,10 @@
   <form id="voteform">
     Vote:<br>
     {{#each otherPlayers}}
-      <!-- {{>pickPlayer}} can't figure out multiple forms, do this instead -->
       <input type="radio" name="voteplayer" value="{{this._id}}">{{username}}
     {{/each}}
     <input type="radio" name="voteplayer" value="nobody" checked>Continue Daytime
-    <input type="submit" value="Submit">
+    <button type="submit" class="btn btn-primary">Submit</button>
   </form>
 </template>
 

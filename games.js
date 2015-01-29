@@ -1,9 +1,12 @@
 // One Night Werewolf
 
+// TODO:
+// Look into code that waits for collections to initialize before rendering the page.
+
 AllRoles = new Mongo.Collection("all_roles");
 Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
-GameRoles   = new Mongo.Collection("game_roles");
+GameRoles   = new Mongo.Collection("game_roles"); // {gameid, roleid, name, order}
 
 // TODO: Move this to a separate file
 var GamePlayer = function (gameid, userid, username) {
@@ -68,42 +71,24 @@ if (Meteor.isClient) {
     var gamePlayer = GamePlayers.findOne(gamePlayerId);
     return gamePlayer ? gamePlayer.username : null;
   });
-  Template.body.helpers({
-    users: function() {
-      return Meteor.users.find({});
-    },
-    all_roles: function() {
-      return AllRoles.find({}, {sort: {order:1}});
-    },
-    games: function() {
-      return Games.find({});
-    },
-    game_roles: function() {
-      return GameRoles.find({gameid:this._id}, {sort:{order:1}});
-    },
-    isPlayingThisGame: function() {
-      result = isPlayingThisGameTest(this);
-      return result;
-    },
-    gameStateNotCreating: function() { 
-      return Games.findOne({_id:this._id}).gameState !== "Creating"; 
-    },
-    gameStateTest: function(op, value) {
-      // TODO: This is horrible must be a better way, maybe pass in a query object?
-      if (op === "eq") {
-        return Games.findOne({_id:this._id}).gameState === value;
-      } else if (op === "ne") {
-        return Games.findOne({_id:this._id}).gameState !== value;
-      } else {
-        throw new Meteor.Error("Internal error");
-      }
-    },
-    myRole: function(role) {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      return gamePlayer && gamePlayer.myinfo.orig_role === role;
-    },
+  UI.registerHelper("all_roles", function() {
+    return AllRoles.find({}, {sort: {order:1}});
   });
-
+  UI.registerHelper("game_roles", function() {
+    return GameRoles.find({gameid:this._id}, {sort:{order:1}});
+  });
+  UI.registerHelper("gameStateNotCreating", function() {
+    return Games.findOne({_id:this._id}).gameState !== "Creating";
+  });
+  UI.registerHelper("shortRoleName", function() {
+    if (this.name === "Werewolf") { return "WW"; }
+    else if (this.name === "Seer") { return "SR"; }
+    else if (this.name === "Robber") { return "RB"; }
+    else if (this.name === "Troublemaker") { return "TM"; }
+    else if (this.name === "Insomniac") { return "IN"; }
+    else if (this.name === "Villager") { return "VL"; }
+    else { return "?"; }
+  });
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
     return (gamePlayer) ? true : false;
@@ -133,7 +118,9 @@ if (Meteor.isClient) {
           str = "Did not rob";
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str = "You became the " + gamePlayer.myinfo.night_result + " and " + targetPlayer.username + " became the Robber";
+          str =
+            "You became the " + gamePlayer.myinfo.night_result +
+            " and " + (targetPlayer ? targetPlayer.username : "...") + " became the Robber";
         }
       } else {
         str = "Robber results will go here";
@@ -158,8 +145,21 @@ if (Meteor.isClient) {
     }
     return str;
   }
-
-
+  Template.body.helpers({
+    users: function() {
+      return Meteor.users.find({});
+    },
+    games: function() {
+      return Games.find({});
+    },
+    isPlayingThisGame: function() {
+      result = isPlayingThisGameTest(this);
+      return result;
+    },
+  });
+  Template.body.rendered = function() {
+    $("button[data-toggle='tooltip']").tooltip();
+  };
   Template.body.events({
     "click .add-game": function() {
       Meteor.call("addGame");
@@ -188,10 +188,26 @@ if (Meteor.isClient) {
       Meteor.call("deleteRole", this);
     },
   });
-  Template.fullGameState.helpers({
-    gameStateNotCreating: function() { 
-      return Games.findOne({_id:this._id}).gameState !== "Creating"; 
+  Template.showGame.helpers({
+    gameStateTest: function(op, value) {
+      // TODO: This is horrible must be a better way, maybe pass in a query object?
+      if (op === "eq") {
+        return Games.findOne({_id:this._id}).gameState === value;
+      } else if (op === "ne") {
+        return Games.findOne({_id:this._id}).gameState !== value;
+      } else {
+        throw new Meteor.Error("Internal error");
+      }
     },
+    myRole: function(role) {
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      return gamePlayer && gamePlayer.myinfo.orig_role === role;
+    },
+  });
+  Template.fullGameState.helpers({
+    //gameStateNotCreating: function() {
+    //  return Games.findOne({_id:this._id}).gameState !== "Creating";
+    //},
     myRole: function() {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       if (!gamePlayer) {
