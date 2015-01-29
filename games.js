@@ -22,7 +22,8 @@ var GamePlayer = function (gameid, userid, username) {
     night_done     : false,
     voted_for      : null,    // gameplayerid
     received_votes : 0,
-    win            : false,
+    died           : false,
+    won            : false,
   };
 };
 
@@ -97,6 +98,16 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("myDebugResults", function() {
     return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
+  });
+  UI.registerHelper("gameStateTest", function(op, value) {
+    // TODO: This is horrible must be a better way, maybe pass in a query object?
+    if (op === "eq") {
+      return Games.findOne({_id:this._id}).gameState === value;
+    } else if (op === "ne") {
+      return Games.findOne({_id:this._id}).gameState !== value;
+    } else {
+      throw new Meteor.Error("Internal error");
+    }
   });
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
@@ -207,16 +218,6 @@ if (Meteor.isClient) {
     },
   });
   Template.showGame.helpers({
-    gameStateTest: function(op, value) {
-      // TODO: This is horrible must be a better way, maybe pass in a query object?
-      if (op === "eq") {
-        return Games.findOne({_id:this._id}).gameState === value;
-      } else if (op === "ne") {
-        return Games.findOne({_id:this._id}).gameState !== value;
-      } else {
-        throw new Meteor.Error("Internal error");
-      }
-    },
     myRole: function(role) {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       return gamePlayer && gamePlayer.myinfo.orig_role === role;
@@ -382,23 +383,45 @@ if (Meteor.isServer) {
     var numNotVoted = GamePlayers.find({gameid:gameid, "myinfo.voted_for":     null }).count();
     // if (dayTimerExpired ? numVoted > 0 : numNotVoted === 0)
     if (numNotVoted === 0) {
-      Games.update(gameid, {$set: {"gameState": "Done"}});
       GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
         GamePlayers.update(gamePlayer.myinfo.voted_for, {$inc:{"myinfo.received_votes":1}});
       });
       var mostVotes = 0;
       var mostVotedPlayers = [];
+      var wolfDied = false;
+      var atLeastOneWolf = false;
       GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
         if (gamePlayer.myinfo.received_votes > mostVotes) {
           mostVotes = gamePlayer.myinfo.received_votes;
           mostVotedPlayers = [gamePlayer._id];
+          wolfDied = gamePlayer.myinfo.curr_role === "Werewolf";
         } else if (gamePlayer.myinfo.received_votes === mostVotes) {
           mostVotedPlayers.push(gamePlayer._id);
+          wolfDied = wolfDied || gamePlayer.myinfo.curr_role === "Werewolf";
         }
         if (mostVotes === 1) {
           mostVotedPlayers = []; // It takes at least 2 votes to kill
+          wolfDied = false;
+        }
+        if (gamePlayer.myinfo.curr_role === "Werewolf") {
+          atLeastOneWolf = true;
         }
       });
+      for (var i; i < mostVotedPlayers.length; i++) {
+        GamePlayers.update(mostVotedPlayers[i], {$set:{"myinfo.died":true}});
+      }
+      GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
+        if (gamePlayer.myinfo.curr_role === "Werewolf") {
+          GamePlayers.update(gamePlayer, {$set:{"myinfo.won":!wolfDied}});
+        } else {
+          if (atLeastOneWolf) {
+            GamePlayers.update(gamePlayer, {$set:{"myinfo.won":wolfDied}});
+          } else {
+            GamePlayers.update(gamePlayer, {$set:{"myinfo.won":mostVotedPlayers.length===0}});
+          }
+        }
+      });
+      Games.update(gameid, {$set: {"gameState": "Done"}});
     }
   }
 

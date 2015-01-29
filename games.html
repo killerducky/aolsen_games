@@ -21,11 +21,11 @@
       <ul class="list-unstyled">
         <li><table class="table table-bordered">
           <tr>
-            <th>State</th>
-            <th>Roles</th>
-            <th>Day Timer</th>
-            <th>Num Players</th>
-            <th></th> <!-- action buttons -->
+            <th width="10%"                  >State</th>
+            <th width="30%"                  >Roles</th>
+            <th width="10%" class="hidden-xs">Day Timer</th>
+            <th width="10%" class="hidden-xs">Num Players</th>
+            <th width="20%"                  ></th> <!-- action buttons -->
           </tr>
           {{#each games}}
             <tr>
@@ -35,8 +35,8 @@
                 {{shortRoleName}}
               {{/each}}
               </td>
-              <td>None</td>
-              <td>TBD</td>
+              <td class="hidden-xs">None</td>
+              <td class="hidden-xs">TBD</td>
               <td>
                 {{#if isPlayingThisGame}}
                   <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
@@ -105,30 +105,36 @@
 <template name="fullGameState">
   <li>State: {{gameState}}</li>
   {{#if gameStateNotCreating}}
-    <li>Your Role: {{myRole}}</li>
-    <li>Your Night Action: {{myDebugResults}}</li>
+    <li>You are a <strong>{{myRole}}</strong> at Night {{myDebugResults}}</li>
     {{#if showAllInfo}}
       <li><table class="table table-bordered">
         <tr>
-          <th width="10%">Name</th>
-          <th width="10%">Original Role</th>
-          <th width="10%">Final Role</th>
-          <th width="20%">Night Actions</th>
-          <th width="10%">Voted For</th>
-          <th width="5%">V A</th>
-          <th width="5%">Result</th>
+          <th width="10%"                  >Name</th>
+          <th width="10%"                  >Original Role</th>
+          <th width="10%"                  >Final Role</th>
+          <th width="20%" class="hidden-xs">Night Actions</th>
+          <th width="10%" class="hidden-xs">Voted For</th>
+          <th width="5%"                   >#V</th>
         </tr>
-        {{#each players}}
-          <tr>
-            <td width="10%">{{username}}</td>
-            <td width="10%">{{myinfo.orig_role}}</td>
-            <td width="10%">{{myinfo.curr_role}}</td>
-            <td width="20%">{{debugResults}}</td>
-            <td width="10%">{{gamePlayerId_username myinfo.voted_for}}</td>
-            <td width="5%">{{myinfo.received_votes}}</td>
-            <td width="5%">TBD {{win}}</td>
-          </tr>
-        {{/each}}
+        {{#if gameStateTest "eq" "Done"}}
+          {{#each players}}
+            {{#if myinfo.won}}
+              <tr class="success">
+                {{>fullPlayerInfoRow}}
+              </tr>
+            {{else}}
+              <tr class="danger">
+                {{>fullPlayerInfoRow}}
+              </tr>
+            {{/if}}
+          {{/each}}
+        {{else}}
+          {{#each players}}
+            <tr>
+              {{>fullPlayerInfoRow}}
+            </tr>
+          {{/each}}
+        {{/if}}
         {{mostVotedPlayers}}
       </table></li>
       <li>
@@ -139,6 +145,15 @@
       </li>
     {{/if}}
   {{/if}}
+</template>
+
+<template name="fullPlayerInfoRow">
+  <td width="10%"                  >{{username}}</td>
+  <td width="10%"                  >{{myinfo.orig_role}}</td>
+  <td width="10%"                  >{{myinfo.curr_role}}</td>
+  <td width="20%" class="hidden-xs">{{debugResults}}</td>
+  <td width="10%" class="hidden-xs">{{gamePlayerId_username myinfo.voted_for}}</td>
+  <td width="5%"                   >{{myinfo.received_votes}}</td>
 </template>
 
 <template name="seerNight">
