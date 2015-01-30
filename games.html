@@ -62,6 +62,9 @@
 </template>
 
 <template name="showGame">
+  {{#if nightTransition}}
+    {{>nightTransitionModal}}
+  {{/if}}
   {{#if gameState}}
     <li>
     {{#if isOwnerThisGame}}
@@ -86,7 +89,7 @@
     </li>
 
     {{#if isOwnerThisGame}}
-    {{#if gameStateTest "eq" "Creating"}}
+    {{#if gameStateTest "Creating"}}
       <li> Add Role:
       {{#each all_roles}}
         <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
@@ -103,17 +106,29 @@
 
     {{>fullGameState}}
 
-    {{#if gameStateTest "eq" "Night"}}
+    {{#if gameStateTest "Night"}}
       {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
       {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
     {{/if}}
 
-    {{#if gameStateTest "eq" "Day"}}
+    {{#if gameStateTest "Day"}}
       <li>{{>vote}}</li>
     {{/if}}
   {{else}}
     Game does not exist
   {{/if}}
+</template>
+
+<template name="nightTransitionModal">
+  <div class="modal-dialog nightTransitionModal">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      header
+    </div>
+    <div class="modal-body">
+      body
+    </div>
+  </div>
 </template>
 
 <template name="fullGameState">
@@ -132,7 +147,7 @@
           <th width="10%" class="hidden-xs">Voted For</th>
           <th width="5%"                   >#V</th>
         </tr>
-        {{#if gameStateTest "eq" "Done"}}
+        {{#if gameStateTest "Done"}}
           {{#each players}}
             {{#if myinfo.won}}
               <tr class="success">

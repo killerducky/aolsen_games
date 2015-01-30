@@ -90,15 +90,9 @@ if (Meteor.isClient) {
   UI.registerHelper("myNightResults", function() {
     return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
   });
-  UI.registerHelper("gameStateTest", function(op, value) {
-    // TODO: This is horrible must be a better way, maybe pass in a query object?
-    if (op === "eq") {
-      return Games.findOne({_id:this._id}).gameState === value;
-    } else if (op === "ne") {
-      return Games.findOne({_id:this._id}).gameState !== value;
-    } else {
-      throw new Meteor.Error("Internal error");
-    }
+  UI.registerHelper("gameStateTest", function(value) {
+    // TODO: Is there a better way to do this?
+    return Games.findOne({_id:this._id}).gameState === value;
   });
   UI.registerHelper("isPlayingThisGame", function() {
     return isPlayingThisGameTest(this);
@@ -194,10 +188,28 @@ if (Meteor.isClient) {
       Meteor.call("addGame");
     },
   });
+  Template.nightTransitionModal.rendered = function() {
+    console.log("ntm rendered");
+    $(".nightTransitionModal").on("hidden", function() {
+      console.log("ntm hidden");
+      Session.set("nightAck", true);
+    });
+    $(".nightTransitionModal").on("shown", function() {
+      console.log("ntm shown");
+      $(".nightTransitionModal button.confirm").focus();
+    });
+    $(".nightTransitionModal").on("show");
+  };
   Template.showGame.helpers({
     myRole: function(role) {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       return gamePlayer && gamePlayer.myinfo.orig_role === role;
+    },
+    nightTransition: function() {
+      //var transition = (this.gameState === "Night" && !Session.get("nightAck"));
+      //console.log("nt", this.gameState, Session.get("nightAck"), transition);
+      //return transition;
+      return false; // TODO get this modal working
     },
   });
   Template.showGame.events({
@@ -279,7 +291,8 @@ Meteor.methods({
     Meteor.call("joinGame", gameId);
   },
   deleteGame: function (gameId) {
-    if (game.owner !== Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+    var game = Games.findOne(gameId);
+    if (game.ownerid !== Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
     Games.remove(gameId);
   },
   joinGame: function (gameId) {
