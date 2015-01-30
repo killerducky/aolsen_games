@@ -4,67 +4,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 
-<body>
+<template name="appBody">
   <div class="container">
     <header>
       <h1>One Night Werewolf</h1>
       {{> loginButtons}}
     </header>
+    {{> yield}}
+  </div>
+</template>
 
-    <ul class="list-inline">
-      <li>Users</li>
-      {{#each users}}
-        <li> {{username}} </li>
+<template name="home">
+  <ul class="list-inline">
+    <li>Users</li>
+    {{#each findAllUsers}}
+      <li> {{username}} </li>
+    {{/each}}
+  </ul>
+  {{#if currentUser}}
+    <ul class="list-unstyled">
+      <li><table class="table table-bordered">
+        <tr>
+          <th width="10%"                  >State</th>
+          <th width="30%"                  >Roles</th>
+          <th width="10%" class="hidden-xs">Day Timer</th>
+          <th width="10%" class="hidden-xs">Num Players</th>
+          <th width="20%"                  ></th> <!-- action buttons -->
+        </tr>
+        {{#each findAllGames}}
+          <tr>
+            <td>{{gameState}}</td>
+            <td>
+            {{#each game_roles}}
+              {{shortRoleName}}
+            {{/each}}
+            </td>
+            <td class="hidden-xs">None</td>
+            <td class="hidden-xs">TBD</td>
+            <td>
+              {{#if isPlayingThisGame}}
+                <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
+                <span class="glyphicon glyphicon-minus"></span>
+                </button>
+              {{else}}
+                <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
+                <span class="glyphicon glyphicon-plus"></span>
+                </button>
+              {{/if}}
+              {{#if isOwnerThisGame}}
+                <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
+                <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
+              {{/if}}
+            </td>
+          </tr>
+        {{/each}}
+      </table>
+      <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button></li>
+      {{#each findAllGames}}
+        {{#if isPlayingThisGame}}
+          {{>showGame}}
+        {{/if}}
       {{/each}}
     </ul>
-    {{#if currentUser}}
-      <ul class="list-unstyled">
-        <li><table class="table table-bordered">
-          <tr>
-            <th width="10%"                  >State</th>
-            <th width="30%"                  >Roles</th>
-            <th width="10%" class="hidden-xs">Day Timer</th>
-            <th width="10%" class="hidden-xs">Num Players</th>
-            <th width="20%"                  ></th> <!-- action buttons -->
-          </tr>
-          {{#each games}}
-            <tr>
-              <td>{{gameState}}</td>
-              <td>
-              {{#each game_roles}}
-                {{shortRoleName}}
-              {{/each}}
-              </td>
-              <td class="hidden-xs">None</td>
-              <td class="hidden-xs">TBD</td>
-              <td>
-                {{#if isPlayingThisGame}}
-                  <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
-                  <span class="glyphicon glyphicon-minus"></span>
-                  </button>
-                {{else}}
-                  <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
-                  <span class="glyphicon glyphicon-plus"></span>
-                  </button>
-                {{/if}}
-                {{#if isOwnerThisGame}}
-                  <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
-                  <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
-                {{/if}}
-              </td>
-            </tr>
-          {{/each}}
-        </table>
-        <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button></li>
-        {{#each games}}
-          {{#if isPlayingThisGame}}
-            {{>showGame}}
-          {{/if}}
-        {{/each}}
-      </ul>
-    {{/if}}
-  </div>
-</body>
+  {{/if}}
+</template>
+
+<template name="about">
+  <p>One Night Werewolf</p>
+  <p>Version: 0.1</p>
+</template>
 
 <template name="showGame">
   <li> Players:

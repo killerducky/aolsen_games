@@ -168,11 +168,11 @@ if (Meteor.isClient) {
     }
     return str;
   }
-  Template.body.helpers({
-    users: function() {
+  Template.home.helpers({
+    findAllUsers: function() {
       return Meteor.users.find({});
     },
-    games: function() {
+    findAllGames: function() {
       return Games.find({});
     },
     isPlayingThisGame: function() {
@@ -180,10 +180,10 @@ if (Meteor.isClient) {
       return result;
     },
   });
-  Template.body.rendered = function() {
-    $("button[data-toggle='tooltip']").tooltip();
+  Template.home.rendered = function() {
+    $("[data-toggle='tooltip']").tooltip();
   };
-  Template.body.events({
+  Template.home.events({
     "click .add-game": function() {
       Meteor.call("addGame");
     },
