@@ -42,29 +42,16 @@
             <td class="hidden-xs">None</td>
             <td class="hidden-xs">TBD</td>
             <td>
-              {{#if isPlayingThisGame}}
-                <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
-                <span class="glyphicon glyphicon-minus"></span>
-                </button>
-              {{else}}
-                <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
-                <span class="glyphicon glyphicon-plus"></span>
-                </button>
-              {{/if}}
-              {{#if isOwnerThisGame}}
-                <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
-                <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
-              {{/if}}
+              <a href="/game/{{_id}}">
+              <button class="open-game btn btn-info" data-toggle="tooltip" title="Join Game Room">
+              <span class="glyphicon glyphicon-plus"></span>
+              </button>
+              </a>
             </td>
           </tr>
         {{/each}}
       </table>
       <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button></li>
-      {{#each findAllGames}}
-        {{#if isPlayingThisGame}}
-          {{>showGame}}
-        {{/if}}
-      {{/each}}
     </ul>
   {{/if}}
 </template>
@@ -75,38 +62,58 @@
 </template>
 
 <template name="showGame">
-  <li> Players:
-  {{#each players}}
-    {{username}}
-  {{/each}}
-  </li>
-
-  {{#if isOwnerThisGame}}
-  {{#if gameStateTest "eq" "Creating"}}
-    <li> Add Role:
-    {{#each all_roles}}
-      <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+  {{#if gameState}}
+    <li>
+    {{#if isOwnerThisGame}}
+      <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
+      <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
+    {{else}}
+      {{#if isPlayingThisGame}}
+        <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
+        <span class="glyphicon glyphicon-minus"></span>
+        </button>
+      {{else}}
+        <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
+        <span class="glyphicon glyphicon-plus"></span>
+        </button>
+      {{/if}}
+    {{/if}}
+    </li>
+    <li> Players:
+    {{#each players}}
+      {{username}}
     {{/each}}
     </li>
-  {{/if}}
-  {{/if}}
 
-  <li>Current Roles:
-  {{#each game_roles}}
-    <button class="delete-role btn btn-default">{{name}}</button>
-  {{/each}}
-  </li>
+    {{#if isOwnerThisGame}}
+    {{#if gameStateTest "eq" "Creating"}}
+      <li> Add Role:
+      {{#each all_roles}}
+        <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+      {{/each}}
+      </li>
+    {{/if}}
+    {{/if}}
 
-  {{>fullGameState}}
+    <li>Current Roles:
+    {{#each game_roles}}
+      <button class="delete-role btn btn-default">{{name}}</button>
+    {{/each}}
+    </li>
 
-  {{#if gameStateTest "eq" "Night"}}
-    {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
-    {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
-    {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
-  {{/if}}
+    {{>fullGameState}}
 
-  {{#if gameStateTest "eq" "Day"}}
-    <li>{{>vote}}</li>
+    {{#if gameStateTest "eq" "Night"}}
+      {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
+      {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
+      {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
+    {{/if}}
+
+    {{#if gameStateTest "eq" "Day"}}
+      <li>{{>vote}}</li>
+    {{/if}}
+  {{else}}
+    Game does not exist
   {{/if}}
 </template>
 

@@ -1,8 +1,5 @@
 // One Night Werewolf
 
-// TODO:
-// Look into code that waits for collections to initialize before rendering the page.
-
 AllRoles = new Mongo.Collection("all_roles");
 Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
@@ -56,12 +53,6 @@ function shuffleArray(array) {
 }
 
 if (Meteor.isClient) {
-  // This code only runs on the client
-  Meteor.subscribe("all_roles");
-  Meteor.subscribe("games");
-  Meteor.subscribe("game_players");
-  Meteor.subscribe("game_roles");
-  Meteor.subscribe("directory");
   UI.registerHelper("players", function() {
     return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
   });
@@ -108,6 +99,9 @@ if (Meteor.isClient) {
     } else {
       throw new Meteor.Error("Internal error");
     }
+  });
+  UI.registerHelper("isPlayingThisGame", function() {
+    return isPlayingThisGameTest(this);
   });
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
@@ -187,6 +181,14 @@ if (Meteor.isClient) {
     "click .add-game": function() {
       Meteor.call("addGame");
     },
+  });
+  Template.showGame.helpers({
+    myRole: function(role) {
+      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+      return gamePlayer && gamePlayer.myinfo.orig_role === role;
+    },
+  });
+  Template.showGame.events({
     "click .start-game": function() {
       // Start or Reset game based on current game state
       // TODO: Icon should switch to a recycle instead of play
@@ -215,12 +217,6 @@ if (Meteor.isClient) {
     },
     "click .delete-role": function () {
       Meteor.call("deleteRole", this);
-    },
-  });
-  Template.showGame.helpers({
-    myRole: function(role) {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      return gamePlayer && gamePlayer.myinfo.orig_role === role;
     },
   });
   Template.fullGameState.helpers({
@@ -308,7 +304,7 @@ Meteor.methods({
     Meteor.call("joinGame", gameId);
   },
   deleteGame: function (gameId) {
-    //if (game.owner !== Meteor.userId()) {}
+    if (game.owner !== Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
     Games.remove(gameId);
   },
   joinGame: function (gameId) {
