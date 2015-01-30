@@ -105,7 +105,6 @@
 
     {{#if gameStateTest "eq" "Night"}}
       {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
-      {{#if myRole "Werewolf"}} {{> wolfNight  }} {{/if}}
       {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
     {{/if}}
 
@@ -120,7 +119,9 @@
 <template name="fullGameState">
   <li>State: {{gameState}}</li>
   {{#if gameStateNotCreating}}
-    <li>You are a <strong>{{myRole}}</strong> at Night {{myDebugResults}}</li>
+    <li>
+    {{myNightResults}}
+    </li>
     {{#if showAllInfo}}
       <li><table class="table table-bordered">
         <tr>
@@ -166,7 +167,7 @@
   <td width="10%"                  >{{username}}</td>
   <td width="10%"                  >{{myinfo.orig_role}}</td>
   <td width="10%"                  >{{myinfo.curr_role}}</td>
-  <td width="20%" class="hidden-xs">{{debugResults}}</td>
+  <td width="20%" class="hidden-xs">{{thisNightResults}}</td>
   <td width="10%" class="hidden-xs">{{gamePlayerId_username myinfo.voted_for}}</td>
   <td width="5%"                   >{{myinfo.received_votes}}</td>
 </template>
@@ -200,13 +201,6 @@
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <br>
-  </li>
-</template>
-
-<template name="wolfNight">
-  <li>
-    Wolf Night Actions:<br>
-    {{wolfNightScript}}
   </li>
 </template>
 

@@ -73,12 +73,12 @@ if (Meteor.isClient) {
     return Games.findOne({_id:this._id}).gameState !== "Creating";
   });
   UI.registerHelper("shortRoleName", function() {
-    if (this.name === "Werewolf") { return "WW"; }
-    else if (this.name === "Seer") { return "SR"; }
-    else if (this.name === "Robber") { return "RB"; }
+    if (this.name === "Werewolf") { return "W"; }
+    else if (this.name === "Seer") { return "S"; }
+    else if (this.name === "Robber") { return "R"; }
     else if (this.name === "Troublemaker") { return "TM"; }
-    else if (this.name === "Insomniac") { return "IN"; }
-    else if (this.name === "Villager") { return "VL"; }
+    else if (this.name === "Insomniac") { return "I"; }
+    else if (this.name === "Villager") { return "V"; }
     else { return "?"; }
   });
   UI.registerHelper("isOwnerThisGame", function() {
@@ -87,7 +87,7 @@ if (Meteor.isClient) {
   UI.registerHelper("showAllInfo", function() {
     return (this.example_game || this.ownerid === Meteor.userId() || this.gameState === "Done");
   });
-  UI.registerHelper("myDebugResults", function() {
+  UI.registerHelper("myNightResults", function() {
     return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
   });
   UI.registerHelper("gameStateTest", function(op, value) {
@@ -119,12 +119,12 @@ if (Meteor.isClient) {
     if (gamePlayer.myinfo.orig_role == "Seer") {
       if (gamePlayer.myinfo.night_done) {
         if (night_targets.length === 2) {
-          str = "You peeked at 2 of the 3 middle cards." +
+          str = "You are a Seer, and you peeked at 2 of the 3 middle cards." +
                    " #" + night_targets[0] + "=" + game.myinfo.unused_roles[night_targets[0]].name +
                    " #" + night_targets[1] + "=" + game.myinfo.unused_roles[night_targets[1]].name;
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str = "You peeked at " + targetPlayer.username + " and saw he was the " + targetPlayer.myinfo.orig_role;
+          str = "You are a Seer, and you peeked at " + targetPlayer.username + " and saw he was a " + targetPlayer.myinfo.orig_role;
         }
       } else {
         str = "Seer results will go here";
@@ -136,8 +136,8 @@ if (Meteor.isClient) {
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
           str =
-            "You became the " + gamePlayer.myinfo.night_result +
-            " and " + (targetPlayer ? targetPlayer.username : "...") + " became the Robber";
+            "You were a Robber but you became a " + gamePlayer.myinfo.night_result +
+            " and " + (targetPlayer ? targetPlayer.username : "...") + " became a Robber";
         }
       } else {
         str = "Robber results will go here";
@@ -157,6 +157,18 @@ if (Meteor.isClient) {
           str += " " + orig_werewolves[i].username;
         }
       }
+    } else if (gamePlayer.myinfo.orig_role == "Insomniac") {
+      if (game.gameState === "Day" || game.gameState === "Done") {
+        if (gamePlayer.myinfo.curr_role === gamePlayer.myinfo.orig_role) {
+          str = "You are still an Insomniac.";
+        } else {
+          str = "You were an Insomniac, but you became a " + gamePlayer.myinfo.curr_role;
+        }
+      } else {
+        str = "You are an Insomniac. Soon you will find out if your role changed";
+      }
+    } else if (gamePlayer.myinfo.orig_role == "Villager") {
+      str = "You are a Villager, so you have no special night abilities";
     } else {
       str = "...";
     }
@@ -220,9 +232,6 @@ if (Meteor.isClient) {
     },
   });
   Template.fullGameState.helpers({
-    //gameStateNotCreating: function() {
-    //  return Games.findOne({_id:this._id}).gameState !== "Creating";
-    //},
     myRole: function() {
       var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
       if (!gamePlayer) {
@@ -230,17 +239,11 @@ if (Meteor.isClient) {
       }
       return gamePlayer.myinfo.orig_role;
     },
-    debugResults: function() {
+  });
+  Template.fullPlayerInfoRow.helpers({
+    thisNightResults: function() {
       return nightResult(this.gameid, this._id);
     }
-  });
-  //Template.fullGameState.events({
-  //});
-  Template.seerNight.helpers({
-    seerResults: function() {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      return nightResult(this._id, gamePlayer._id);
-    },
   });
   Template.seerNight.events({
     "submit form": function(event) {
@@ -249,39 +252,11 @@ if (Meteor.isClient) {
       Meteor.call("seerNightSubmit", this, Meteor.userId(), result);
     },
   });
-  Template.robberNight.helpers({
-    robberResults: function() {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      return nightResult(this._id, gamePlayer._id);
-    },
-  });
   Template.robberNight.events({
     "submit form": function(event) {
       event.preventDefault();
       var result = $("input[name='player']:checked").val();
       Meteor.call("robberNightSubmit", this, Meteor.userId(), result);
-    },
-  });
-  Template.wolfNight.helpers({
-    wolfNightScript: function() {
-      var game = Games.findOne({_id:this._id});
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      if (game.gameState === "Creating" || !gamePlayer.myinfo.night_done) {
-        return "Error: Not night yet";
-      }
-      var orig_werewolves = game.myinfo.orig_werewolves;
-      if (orig_werewolves.length === 1) {
-        var i = gamePlayer.myinfo.night_targets[0];
-        var centerPeek = game.myinfo.unused_roles[i].name;
-        str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
-        return str;
-      } else {
-        str = "The Werewolves are:";
-        for (var i=0; i<orig_werewolves.length; i++) {
-          str += " " + orig_werewolves[i].username;
-        }
-        return str;
-      }
     },
   });
   Template.vote.events({
@@ -472,7 +447,7 @@ if (Meteor.isServer) {
       });
       Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
 
-      // Werewolf night logic -- no input from user required, so execute now
+      // Night logic for roles that we can execute immediately
       game = Games.findOne(game._id);
       var orig_werewolves = game.myinfo.orig_werewolves;
       GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
@@ -485,6 +460,9 @@ if (Meteor.isServer) {
           } else {
             GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_done"   : true}});
           }
+        } else if ( (gamePlayer.myinfo.orig_role === "Insomniac") ||
+                    (gamePlayer.myinfo.orig_role === "Villager")) {
+          GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_done"   : true}});
         }
       });
 
