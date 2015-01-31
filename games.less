@@ -1,5 +1,7 @@
 @import "client/lib/custom.bootstrap.import.less";
 
+@user-attention-color:   @brand-info;
+
 
 body {
   background-color: #315481;
@@ -33,12 +35,6 @@ header {
   display: block;
 }
 
-form {
-  margin-top: 10px;
-  margin-bottom: -10px;
-  position: relative;
-}
-
 ul {
   margin: 0;
   padding: 0;
@@ -47,16 +43,30 @@ ul {
 li {
   position: relative;
   list-style: none;
-  // padding: 15px;
-  padding-bottom: 15px;
-  padding-top: 15px;
-  padding-left: 0;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
   padding-right: 0;
-  border-bottom: #eee solid 1px;
 }
 
-li .text {
-  margin-left: 10px;
+.show-all-info {
+  background-color: @brand-danger;
+}
+
+.user-attention {
+  background-color: @user-attention-color;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+form {
+  background-color: @user-attention-color;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 th, td {

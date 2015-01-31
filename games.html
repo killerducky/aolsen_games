@@ -6,54 +6,81 @@
 
 <template name="appBody">
   <div class="container">
-    <header>
-      <h1>One Night Werewolf</h1>
-      {{> loginButtons}}
-    </header>
+    <!--
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="nav navbar-nav">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <ul class="nav navbar-nav navbar-left">
+        <li><a class="navbar-brand" href="#">ONW</a></li>
+      </ul>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-left">
+          <li><a href="/" padding="0">Home</a></li>
+          <li><a href="/about" padding-top="0" padding-bottom="0">About</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#">{{> loginButtons align="right"}}</a></li>
+        </ul>
+      </div>
+    </nav>
+    -->
+    <ul class="list-inline">
+      <li><a href="#">{{> loginButtons}}</a></li>
+      <li><a href="/" padding="0">Home</a></li>
+      <li><a href="/about" padding-top="0" padding-bottom="0">About</a></li>
+    </ul>
     {{> yield}}
   </div>
 </template>
 
 <template name="home">
+  {{#if currentUser}}
+    <table class="table table-bordered">
+      <caption>Current games</caption>
+      <tr>
+        <th width="10%"                  >State</th>
+        <th width="30%"                  >Roles</th>
+        <th width="10%" class="hidden-xs">Day Timer</th>
+        <th width="10%" class="hidden-xs">Num Players</th>
+        <th width="20%"                  ></th> <!-- action buttons -->
+      </tr>
+      {{#each findAllGames}}
+        <tr>
+          <td>{{gameState}}</td>
+          <td>
+          {{#each game_roles}}
+            {{shortRoleName}}
+          {{/each}}
+          </td>
+          <td class="hidden-xs">None</td>
+          <td class="hidden-xs">TBD</td>
+          <td>
+            <a href="/game/{{_id}}">
+            <button class="open-game btn btn-info" data-toggle="tooltip" title="Join Game Room">
+            <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            </a>
+          </td>
+        </tr>
+      {{/each}}
+    </table>
+    <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button>
+    {{>userList}}
+  {{/if}}
+</template>
+
+<template name="userList">
   <ul class="list-inline">
     <li>Users</li>
     {{#each findAllUsers}}
       <li> {{username}} </li>
     {{/each}}
   </ul>
-  {{#if currentUser}}
-    <ul class="list-unstyled">
-      <li><table class="table table-bordered">
-        <tr>
-          <th width="10%"                  >State</th>
-          <th width="30%"                  >Roles</th>
-          <th width="10%" class="hidden-xs">Day Timer</th>
-          <th width="10%" class="hidden-xs">Num Players</th>
-          <th width="20%"                  ></th> <!-- action buttons -->
-        </tr>
-        {{#each findAllGames}}
-          <tr>
-            <td>{{gameState}}</td>
-            <td>
-            {{#each game_roles}}
-              {{shortRoleName}}
-            {{/each}}
-            </td>
-            <td class="hidden-xs">None</td>
-            <td class="hidden-xs">TBD</td>
-            <td>
-              <a href="/game/{{_id}}">
-              <button class="open-game btn btn-info" data-toggle="tooltip" title="Join Game Room">
-              <span class="glyphicon glyphicon-plus"></span>
-              </button>
-              </a>
-            </td>
-          </tr>
-        {{/each}}
-      </table>
-      <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button></li>
-    </ul>
-  {{/if}}
 </template>
 
 <template name="about">
@@ -66,11 +93,52 @@
     {{>nightTransitionModal}}
   {{/if}}
   {{#if gameState}}
-    <li>
-    {{#if isOwnerThisGame}}
-      <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
-      <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
+    <table class="table table-bordered">
+      {{>gameStateActions}}
+      {{>playerListT}}
+      {{>addRolesT}}
+      {{>listRolesT}}
+      <tr><td>State</td>             <td>{{gameState}}</td></tr>
+      <tr><td>Your original role</td><td>{{myRole}}</td></tr>
+      <tr><td>Night Results</td>     <td>{{myNightResults}}</td></tr>
+    </table>
+
+    {{#if gameStateTest "Creating"}}
     {{else}}
+      {{>userActions}}
+    {{/if}}
+
+    {{>gameResultTableLogicT}}
+
+  {{else}}
+    Game does not exist
+  {{/if}}
+</template>
+
+<template name="gameResultTableLogicT">
+  {{#if gameStateTest "Creating"}}
+  {{else}}
+    {{#if gameStateTest "Done"}}
+      {{>gameResultTable}}
+    {{else}}
+      {{#if showAllInfo}}
+        <div class="show-all-info">
+          {{>gameResultTable}}
+        </div>
+      {{/if}}
+    {{/if}}
+  {{/if}}
+</template>
+
+<template name="gameStateActions">
+  <tr>
+  <td>Actions</td>
+  <td>
+  {{#if isOwnerThisGame}}
+    <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
+    <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
+  {{else}}
+    {{#if gameStateTest "Creating"}}
       {{#if isPlayingThisGame}}
         <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
         <span class="glyphicon glyphicon-minus"></span>
@@ -80,42 +148,73 @@
         <span class="glyphicon glyphicon-plus"></span>
         </button>
       {{/if}}
+    {{else}}
+      N/A
     {{/if}}
-    </li>
-    <li> Players:
-    {{#each players}}
-      {{username}}
-    {{/each}}
-    </li>
+  {{/if}}
+  </td>
+  </tr>
+</template>
 
-    {{#if isOwnerThisGame}}
+<template name="playerListT">
+  <tr><td>Players</td>
+  <td>
+  {{#each players}}
+    {{username}}
+  {{/each}}
+  </td>
+  </tr>
+</template>
+
+
+<template name="addRolesT">
+  {{#if isOwnerThisGame}}
+  {{#if gameStateTest "Creating"}}
+    <tr><td>Add Role</td>
+    <td>
+    {{#each all_roles}}
+      <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+    {{/each}}
+    </td>
+    </tr>
+  {{/if}}
+  {{/if}}
+</template>
+
+<template name="listRolesT">
+  <tr><td>Game roles</td>
+  <td>
     {{#if gameStateTest "Creating"}}
-      <li> Add Role:
-      {{#each all_roles}}
-        <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+      {{#if isOwnerThisGame}}
+        {{#each game_roles}}
+          <button class="delete-role btn btn-default">{{name}}</button>
+        {{/each}}
+      {{else}}
+        {{#each game_roles}}
+          {{name}}
+        {{/each}}
+      {{/if}}
+    {{else}}
+      {{#each game_roles}}
+        {{name}}
       {{/each}}
-      </li>
     {{/if}}
+  </td></tr>
+</template>
+
+
+<template name="userActions">
+  {{#if gameStateTest "Night"}}
+    {{#if myNightResults}}
+      <p class="user-attention">Waiting for other players to finish their Night actions.</p>
+    {{else}}
+      {{#if myRoleTest "Seer"    }} {{> seerNight  }} {{/if}}
+      {{#if myRoleTest "Robber"  }} {{> robberNight}} {{/if}}
     {{/if}}
+  {{/if}}
 
-    <li>Current Roles:
-    {{#each game_roles}}
-      <button class="delete-role btn btn-default">{{name}}</button>
-    {{/each}}
-    </li>
-
-    {{>fullGameState}}
-
-    {{#if gameStateTest "Night"}}
-      {{#if myRole "Seer"    }} {{> seerNight  }} {{/if}}
-      {{#if myRole "Robber"  }} {{> robberNight}} {{/if}}
-    {{/if}}
-
-    {{#if gameStateTest "Day"}}
-      <li>{{>vote}}</li>
-    {{/if}}
-  {{else}}
-    Game does not exist
+  {{#if gameStateTest "Day"}}
+    <p>{{>vote}}</p>
   {{/if}}
 </template>
 
@@ -131,51 +230,42 @@
   </div>
 </template>
 
-<template name="fullGameState">
-  <li>State: {{gameState}}</li>
-  {{#if gameStateNotCreating}}
-    <li>
-    {{myNightResults}}
-    </li>
-    {{#if showAllInfo}}
-      <li><table class="table table-bordered">
-        <tr>
-          <th width="10%"                  >Name</th>
-          <th width="10%"                  >Original Role</th>
-          <th width="10%"                  >Final Role</th>
-          <th width="20%" class="hidden-xs">Night Actions</th>
-          <th width="10%" class="hidden-xs">Voted For</th>
-          <th width="5%"                   >#V</th>
-        </tr>
-        {{#if gameStateTest "Done"}}
-          {{#each players}}
-            {{#if myinfo.won}}
-              <tr class="success">
-                {{>fullPlayerInfoRow}}
-              </tr>
-            {{else}}
-              <tr class="danger">
-                {{>fullPlayerInfoRow}}
-              </tr>
-            {{/if}}
-          {{/each}}
+<template name="gameResultTable">
+  <table class="table table-bordered">
+    <tr>
+      <th width="10%"                  >Name</th>
+      <th width="10%"                  >Original Role</th>
+      <th width="10%"                  >Final Role</th>
+      <th width="20%" class="hidden-xs">Night Actions</th>
+      <th width="10%" class="hidden-xs">Voted For</th>
+      <th width="5%"                   >#V</th>
+    </tr>
+    {{#if gameStateTest "Done"}}
+      {{#each players}}
+        {{#if myinfo.won}}
+          <tr class="success">
+            {{>fullPlayerInfoRow}}
+          </tr>
         {{else}}
-          {{#each players}}
-            <tr>
-              {{>fullPlayerInfoRow}}
-            </tr>
-          {{/each}}
+          <tr class="danger">
+            {{>fullPlayerInfoRow}}
+          </tr>
         {{/if}}
-        {{mostVotedPlayers}}
-      </table></li>
-      <li>
-      Unused Roles:
-      {{#each myinfo.unused_roles}}
-        {{name}}
       {{/each}}
-      </li>
+    {{else}}
+      {{#each players}}
+        <tr>
+          {{>fullPlayerInfoRow}}
+        </tr>
+      {{/each}}
     {{/if}}
-  {{/if}}
+    {{mostVotedPlayers}}
+  </table>
+  <p> Unused Roles:
+    {{#each myinfo.unused_roles}}
+      {{name}}
+    {{/each}}
+  </p>
 </template>
 
 <template name="fullPlayerInfoRow">
@@ -188,49 +278,52 @@
 </template>
 
 <template name="seerNight">
-  <li>
-    Seer Night Actions: <br>
-    You are the Seer. Pick One player to Peek, or 2 cards from the middle. <br>
-    Players:
+  <p>
     <form id="seerform">
-      {{#each otherPlayers}}
-        {{>pickPlayer}}
-      {{/each}}
-      <input type="radio" name="player" value="middle" checked>2 cards from the middle
-      <button type="submit" class="btn btn-primary">Submit</button>
+      Pick One player to Peek, or 2 cards from the middle.
+      <ul>
+        {{#each otherPlayers}}
+          <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
+        {{/each}}
+        <li><input type="radio" name="player" value="middle" checked>2 cards from the middle</li>
+        <li><button type="submit" class="btn btn-primary">Submit</button></li>
+      </ul>
     </form>
     <br>
-  </li>
+  </p>
 </template>
 
 <template name="robberNight">
-  <li>
-    Robber Night Actions: <br>
-    You are the Robber. Pick One player to Rob, or choose "Do not rob". <br>
-    Players:
+  <p>
     <form id="robberform">
-      {{#each otherPlayers}}
-        {{>pickPlayer}}
-      {{/each}}
-      <input type="radio" name="player" value="nobody" checked>Do not rob
-      <button type="submit" class="btn btn-primary">Submit</button>
+      Pick One player to Rob, or choose "Do not rob".
+      <ul>
+        {{#each otherPlayers}}
+          <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
+        {{/each}}
+        <li><input type="radio" name="player" value="nobody" checked>Do not rob</li>
+        <li><button type="submit" class="btn btn-primary">Submit</button></li>
+      </ul>
     </form>
     <br>
-  </li>
+  </p>
 </template>
 
 <template name="vote">
   <form id="voteform">
-    Vote:<br>
-    {{#each otherPlayers}}
-      <input type="radio" name="voteplayer" value="{{this._id}}">{{username}}
-    {{/each}}
-    <input type="radio" name="voteplayer" value="nobody" checked>Continue Daytime
-    <button type="submit" class="btn btn-primary">Submit</button>
+    Vote for a player to kill
+    <ul>
+      {{#each otherPlayers}}
+        <li><input type="radio" name="voteplayer" value="{{this._id}}">{{username}}</li>
+      {{/each}}
+      <li><input type="radio" name="voteplayer" value="nobody" checked>Continue daytime</li>
+      <li><button type="submit" class="btn btn-primary">Submit</button></li>
+    </ul>
+    {{#if myVote}}
+      Currently you are voting for {{myinfo.voted_for}}. You may change your vote at any time until everyone votes for someone.
+    {{else}}
+      Currently you are voting to continue daytime. You may change your vote at any time until everyone votes for someone.
+    {{/if}}
   </form>
-</template>
-
-<template name="pickPlayer">
-  <input type="radio" name="player" value="{{this._id}}">{{username}}
 </template>
 

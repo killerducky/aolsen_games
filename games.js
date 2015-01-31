@@ -69,9 +69,6 @@ if (Meteor.isClient) {
   UI.registerHelper("game_roles", function() {
     return GameRoles.find({gameid:this._id}, {sort:{order:1}});
   });
-  UI.registerHelper("gameStateNotCreating", function() {
-    return Games.findOne({_id:this._id}).gameState !== "Creating";
-  });
   UI.registerHelper("shortRoleName", function() {
     if (this.name === "Werewolf") { return "W"; }
     else if (this.name === "Seer") { return "S"; }
@@ -85,17 +82,35 @@ if (Meteor.isClient) {
     return this.ownerid === Meteor.userId();
   });
   UI.registerHelper("showAllInfo", function() {
-    return (this.example_game || this.ownerid === Meteor.userId() || this.gameState === "Done");
+    return (this.example_game || Session.get("debug") || this.gameState === "Done");
   });
   UI.registerHelper("myNightResults", function() {
     return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
   });
   UI.registerHelper("gameStateTest", function(value) {
     // TODO: Is there a better way to do this?
-    return Games.findOne({_id:this._id}).gameState === value;
+    return Games.findOne(this._id).gameState === value;
   });
   UI.registerHelper("isPlayingThisGame", function() {
     return isPlayingThisGameTest(this);
+  });
+  UI.registerHelper("findAllUsers", function() {
+    return Meteor.users.find({});
+  });
+  UI.registerHelper("findAllGames", function() {
+    return Games.find({});
+  });
+  UI.registerHelper("myRole", function() {
+    var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    return gamePlayer ? gamePlayer.myinfo.orig_role : "You are not playing this game";
+  });
+  UI.registerHelper("myVote", function() {
+    var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    return gamePlayer && gamePlayer.myinfo.voted_for && gamePlayer.myinfo.voted_for.username;
+  });
+  UI.registerHelper("myRoleTest", function(role) {
+    var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    return gamePlayer && gamePlayer.myinfo.orig_role === role;
   });
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
@@ -121,7 +136,7 @@ if (Meteor.isClient) {
           str = "You are a Seer, and you peeked at " + targetPlayer.username + " and saw he was a " + targetPlayer.myinfo.orig_role;
         }
       } else {
-        str = "Seer results will go here";
+        str = "";
       }
     } else if (gamePlayer.myinfo.orig_role == "Robber") {
       if (gamePlayer.myinfo.night_done) {
@@ -134,21 +149,22 @@ if (Meteor.isClient) {
             " and " + (targetPlayer ? targetPlayer.username : "...") + " became a Robber";
         }
       } else {
-        str = "Robber results will go here";
+        str = "";
       }
     } else if (gamePlayer.myinfo.orig_role == "Werewolf") {
       if (game.gameState === "Creating" || !gamePlayer.myinfo.night_done) {
         str = "Error: Not night yet";
-      }
-      var orig_werewolves = game.myinfo.orig_werewolves;
-      if (orig_werewolves.length === 1) {
-        var i = gamePlayer.myinfo.night_targets[0];
-        var centerPeek = game.myinfo.unused_roles[i].name;
-        str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
       } else {
-        str = "The Werewolves are:";
-        for (var i=0; i<orig_werewolves.length; i++) {
-          str += " " + orig_werewolves[i].username;
+        var orig_werewolves = game.myinfo.orig_werewolves;
+        if (orig_werewolves.length === 1) {
+          var i = gamePlayer.myinfo.night_targets[0];
+          var centerPeek = game.myinfo.unused_roles[i].name;
+          str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
+        } else {
+          str = "The Werewolves are:";
+          for (var i=0; i<orig_werewolves.length; i++) {
+            str += " " + orig_werewolves[i].username;
+          }
         }
       }
     } else if (gamePlayer.myinfo.orig_role == "Insomniac") {
@@ -169,16 +185,6 @@ if (Meteor.isClient) {
     return str;
   }
   Template.home.helpers({
-    findAllUsers: function() {
-      return Meteor.users.find({});
-    },
-    findAllGames: function() {
-      return Games.find({});
-    },
-    isPlayingThisGame: function() {
-      result = isPlayingThisGameTest(this);
-      return result;
-    },
   });
   Template.home.rendered = function() {
     $("[data-toggle='tooltip']").tooltip();
@@ -201,10 +207,6 @@ if (Meteor.isClient) {
     $(".nightTransitionModal").on("show");
   };
   Template.showGame.helpers({
-    myRole: function(role) {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      return gamePlayer && gamePlayer.myinfo.orig_role === role;
-    },
     nightTransition: function() {
       //var transition = (this.gameState === "Night" && !Session.get("nightAck"));
       //console.log("nt", this.gameState, Session.get("nightAck"), transition);
@@ -243,15 +245,6 @@ if (Meteor.isClient) {
       Meteor.call("deleteRole", this);
     },
   });
-  Template.fullGameState.helpers({
-    myRole: function() {
-      var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-      if (!gamePlayer) {
-        return "N/A -- You are an observer";
-      }
-      return gamePlayer.myinfo.orig_role;
-    },
-  });
   Template.fullPlayerInfoRow.helpers({
     thisNightResults: function() {
       return nightResult(this.gameid, this._id);
@@ -284,38 +277,9 @@ if (Meteor.isClient) {
   });
 }
 
-Meteor.methods({
-  addGame: function () {
-    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    var gameId = Games.insert(new Game(Meteor.user()));
-    Meteor.call("joinGame", gameId);
-  },
-  deleteGame: function (gameId) {
-    var game = Games.findOne(gameId);
-    if (game.ownerid !== Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    Games.remove(gameId);
-  },
-  joinGame: function (gameId) {
-    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    GamePlayers.insert(new GamePlayer(gameId, Meteor.userId(), Meteor.user().username));
-  },
-  leaveGame: function (gameId) {
-    var gamePlayerId = GamePlayers.findOne({gameid:gameId, userid:Meteor.userId()});
-    GamePlayers.remove(gamePlayerId);
-  },
-  addRole: function (gameId, role) {
-    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    GameRoles.insert({gameid:gameId, roleid:role._id, name:role.name, order:role.order});
-  },
-  deleteRole: function (role) {
-    if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
-    GameRoles.remove(role._id);
-  },
-});
-
 if (Meteor.isServer) {
   Meteor.publish("all_roles", function() {
-    return AllRoles.find({});
+  return AllRoles.find({});
   });
   Meteor.publish("games", function() {
     return Games.find({});
@@ -410,9 +374,54 @@ if (Meteor.isServer) {
   }
 
   Meteor.methods({
+    addGame: function () {
+      if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+      var gameId = Games.insert(new Game(Meteor.user()));
+      Meteor.call("joinGame", gameId);
+    },
+    deleteGame: function (gameId) {
+      var game = Games.findOne(gameId);
+      if (game.ownerid !== Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+      Games.remove(gameId);
+    },
+    joinGame: function (gameId) {
+      if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+      var game = Games.findOne(gameId);
+      if (game.gameState !== "Creating") {
+        throw new Meteor.Error("Error: Cannot join game in progress");
+        return;
+      }
+      GamePlayers.insert(new GamePlayer(gameId, Meteor.userId(), Meteor.user().username));
+    },
+    leaveGame: function (gameId) {
+      var gamePlayerId = GamePlayers.findOne({gameid:gameId, userid:Meteor.userId()});
+      var game = Games.findOne(gameId);
+      if (game.gameState !== "Creating") {
+        throw new Meteor.Error("Error: Cannot join game in progress");
+        return;
+      }
+      GamePlayers.remove(gamePlayerId);
+    },
+    addRole: function (gameId, role) {
+      if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+      GameRoles.insert({gameid:gameId, roleid:role._id, name:role.name, order:role.order});
+    },
+    deleteRole: function (role) {
+      var game = Games.findOne(role.gameid);
+      if (game.ownerid !== Meteor.userId()) {
+        throw new Meteor.Error("Error: Only owner can do this", game.ownerid, Meteor.userId());
+        return;
+      }
+      if (game.gameState !== "Creating") {
+        throw new Meteor.Error("Error: Can only delete roles while creating", game.ownerid, Meteor.userId());
+        return;
+      }
+      if (!Meteor.userId()) { throw new Meteor.Error("not-authorized"); }
+      GameRoles.remove(role._id);
+    },
     resetGame: function(game) {
       if (game.ownerid !== Meteor.userId()) {
-        console.log("Error: Only owner can do this", game.ownerid, Meteor.userId());
+        throw new Meteor.Error("Error: Only owner can do this", game.ownerid, Meteor.userId());
         return;
       }
       // Reset game state
@@ -461,7 +470,7 @@ if (Meteor.isServer) {
       Games.update({_id:game._id}, {$set: {"myinfo.unused_roles": unusedRoles}});
 
       // Night logic for roles that we can execute immediately
-      game = Games.findOne(game._id);
+      var game = Games.findOne(game._id);
       var orig_werewolves = game.myinfo.orig_werewolves;
       GamePlayers.find({gameid:game._id}).forEach(function (gamePlayer) {
         if (gamePlayer.myinfo.orig_role === "Werewolf") {
