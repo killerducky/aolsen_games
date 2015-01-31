@@ -4,6 +4,7 @@ AllRoles = new Mongo.Collection("all_roles");
 Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
 GameRoles   = new Mongo.Collection("game_roles"); // {gameid, roleid, name, order}
+TipOfTheDay = new Mongo.Collection("tips");
 
 // TODO: Move this to a separate file
 var GamePlayer = function (gameid, userid, username) {
@@ -87,6 +88,10 @@ if (Meteor.isClient) {
   UI.registerHelper("myNightResults", function() {
     return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
   });
+  UI.registerHelper("myNightDone", function() {
+    var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    return gamePlayer && gamePlayer.myinfo.night_done;
+  });
   UI.registerHelper("gameStateTest", function(value) {
     // TODO: Is there a better way to do this?
     return Games.findOne(this._id).gameState === value;
@@ -111,6 +116,16 @@ if (Meteor.isClient) {
   UI.registerHelper("myRoleTest", function(role) {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
     return gamePlayer && gamePlayer.myinfo.orig_role === role;
+  });
+  UI.registerHelper("randomTip", function() {
+    Meteor.call("randomTip", function(err, data) {
+      if (err) { console.log (err); }
+      Session.set("randomTip", data);
+    });
+    return Session.get("randomTip");
+  });
+  UI.registerHelper("thisNightResults", function() {
+    return nightResult(this.gameid, this._id);
   });
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
@@ -152,7 +167,7 @@ if (Meteor.isClient) {
         str = "";
       }
     } else if (gamePlayer.myinfo.orig_role == "Werewolf") {
-      if (game.gameState === "Creating" || !gamePlayer.myinfo.night_done) {
+      if (game.gameState === "Creating") {
         str = "Error: Not night yet";
       } else {
         var orig_werewolves = game.myinfo.orig_werewolves;
@@ -168,14 +183,14 @@ if (Meteor.isClient) {
         }
       }
     } else if (gamePlayer.myinfo.orig_role == "Insomniac") {
-      if (game.gameState === "Day" || game.gameState === "Done") {
-        if (gamePlayer.myinfo.curr_role === gamePlayer.myinfo.orig_role) {
-          str = "You are still an Insomniac.";
-        } else {
-          str = "You were an Insomniac, but you became a " + gamePlayer.myinfo.curr_role;
-        }
-      } else {
+      if (game.gameState === "Creating") {
+        str = "Error: Not night yet";
+      } else if (game.gameState === "Night") {
         str = "You are an Insomniac. Soon you will find out if your role changed";
+      } else if (gamePlayer.myinfo.curr_role === gamePlayer.myinfo.orig_role) {
+        str = "You are still an Insomniac.";
+      } else {
+        str = "You were an Insomniac, but you became a " + gamePlayer.myinfo.curr_role;
       }
     } else if (gamePlayer.myinfo.orig_role == "Villager") {
       str = "You are a Villager, so you have no special night abilities";
@@ -246,9 +261,6 @@ if (Meteor.isClient) {
     },
   });
   Template.fullPlayerInfoRow.helpers({
-    thisNightResults: function() {
-      return nightResult(this.gameid, this._id);
-    }
   });
   Template.seerNight.events({
     "submit form": function(event) {
@@ -262,6 +274,12 @@ if (Meteor.isClient) {
       event.preventDefault();
       var result = $("input[name='player']:checked").val();
       Meteor.call("robberNightSubmit", this, Meteor.userId(), result);
+    },
+  });
+  Template.dummyNight.events({
+    "submit form": function(event) {
+      event.preventDefault();
+      Meteor.call("dummyNightSubmit", this, Meteor.userId());
     },
   });
   Template.vote.events({
@@ -302,6 +320,12 @@ if (Meteor.isServer) {
       AllRoles.insert({name: "Insomniac",    order: 5});
       AllRoles.insert({name: "Villager",     order: 999});
     }
+    TipOfTheDay.remove({});
+    var id=0;
+    TipOfTheDay.insert({id:id++, tip:"If you're a Werewolf, better get your lies ready."});
+    TipOfTheDay.insert({id:id++, tip:"If you're a Werewolf, you're not a liar -- anyone who says you're a liar is a liar!"});
+    TipOfTheDay.insert({id:id++, tip:"During the day you can change your vote at anytime."});
+    TipOfTheDay.insert({id:id++, tip:"Day ends when 1) everyone votes or 2) the timer expires and at least one person votes"});
   });
 
   // TODO: Maybe this could be a live query?
@@ -477,14 +501,8 @@ if (Meteor.isServer) {
           if (orig_werewolves.length === 1) {
             var pick = Math.floor((Math.random()*3));  // random number between 0 and 2
             var centerPeek = game.myinfo.unused_roles[pick].name;
-            GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_targets": [pick],
-                                                             "myinfo.night_done"   : true}});
-          } else {
-            GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_done"   : true}});
+            GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_targets": [pick]}});
           }
-        } else if ( (gamePlayer.myinfo.orig_role === "Insomniac") ||
-                    (gamePlayer.myinfo.orig_role === "Villager")) {
-          GamePlayers.update({_id:gamePlayer._id}, {$set: {"myinfo.night_done"   : true}});
         }
       });
 
@@ -532,6 +550,10 @@ if (Meteor.isServer) {
       }
       checkNightDone(game._id);
     },
+    dummyNightSubmit: function(game, userid) {
+      GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.night_done" : true}});
+      checkNightDone(game._id);
+    },
     voteSubmit: function(game, userid, target) {
       if (game.gameState !== "Day") {
         console.log("Error: Can only vote during Day");
@@ -543,6 +565,11 @@ if (Meteor.isServer) {
         GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.voted_for" : target }});
       }
       checkDayDone(game._id);
+    },
+    randomTip: function() {
+      var count = TipOfTheDay.find().count()
+      var pick = Math.floor((Math.random()*count));  // random number between 0 and count-1
+      return TipOfTheDay.findOne({id:pick}).tip;
     },
   });
 }
