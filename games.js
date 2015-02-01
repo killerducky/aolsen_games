@@ -5,6 +5,7 @@ Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
 GameRoles   = new Mongo.Collection("game_roles"); // {gameid, roleid, name, order}
 TipOfTheDay = new Mongo.Collection("tips");
+Presences   = new Mongo.Collection("user_presences");
 
 // TODO: Move this to a separate file
 var GamePlayer = function (gameid, userid, username) {
@@ -26,10 +27,16 @@ var GamePlayer = function (gameid, userid, username) {
 };
 
 var Game = function (user) {
-  this.createdAt = new Date();
+  this.timestamps = {
+    created : new Date(),
+    night   : null,
+    day     : null,
+    done    : null,
+  };
   this.text      = "Game created by "+user.username;
   this.ownerid   = user._id;
   this.ownername = user.username;
+  this.daytimer  = 90;
   this.gameState = "Creating";   // Creating, Night, Day, Done
   this.mostVotedPlayers = [];    // gameplayerid
   this.myinfo = {
@@ -86,7 +93,8 @@ if (Meteor.isClient) {
     return (this.example_game || Session.get("debug") || this.gameState === "Done");
   });
   UI.registerHelper("myNightResults", function() {
-    return nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
+    gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    return gamePlayer && nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
   });
   UI.registerHelper("myNightDone", function() {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -99,7 +107,7 @@ if (Meteor.isClient) {
   UI.registerHelper("isPlayingThisGame", function() {
     return isPlayingThisGameTest(this);
   });
-  UI.registerHelper("findAllUsers", function() {
+  UI.registerHelper("onlineUsers", function() {
     return Meteor.users.find({});
   });
   UI.registerHelper("findAllGames", function() {
@@ -111,7 +119,7 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("myVote", function() {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-    return gamePlayer && gamePlayer.myinfo.voted_for && gamePlayer.myinfo.voted_for.username;
+    return gamePlayer && gamePlayer.myinfo.voted_for && GamePlayers.findOne(gamePlayer.myinfo.voted_for).username;
   });
   UI.registerHelper("myRoleTest", function(role) {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -127,6 +135,18 @@ if (Meteor.isClient) {
   UI.registerHelper("thisNightResults", function() {
     return nightResult(this.gameid, this._id);
   });
+  UI.registerHelper("timer", function() {
+    if (this.gameState === "Day") {
+      var time = this.daytimer - Math.floor((Session.get("time").getTime() - this.timestamps.day.getTime())/1000);
+      if (time < 0) { time = 0; }
+      return "Time left: " + time;
+    } else {
+      return null;
+    }
+  });
+  Meteor.setInterval(function () {
+    Session.set('time', new Date());
+  }, 1000); 
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
     return (gamePlayer) ? true : false;
@@ -136,7 +156,7 @@ if (Meteor.isClient) {
     var game = Games.findOne(gameid);
     var gamePlayer = GamePlayers.findOne(gamePlayerId);
     if (!gamePlayer) {
-      return "...";
+      return "";
     }
     var night_targets = gamePlayer.myinfo.night_targets;
     var str;
@@ -161,7 +181,7 @@ if (Meteor.isClient) {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
           str =
             "You were a Robber but you became a " + gamePlayer.myinfo.night_result +
-            " and " + (targetPlayer ? targetPlayer.username : "...") + " became a Robber";
+            " and " + (targetPlayer ? targetPlayer.username : "ERROR") + " became a Robber";
         }
       } else {
         str = "";
@@ -195,7 +215,7 @@ if (Meteor.isClient) {
     } else if (gamePlayer.myinfo.orig_role == "Villager") {
       str = "You are a Villager, so you have no special night abilities";
     } else {
-      str = "...";
+      str = "";
     }
     return str;
   }
@@ -297,7 +317,7 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
   Meteor.publish("all_roles", function() {
-  return AllRoles.find({});
+    return AllRoles.find({});
   });
   Meteor.publish("games", function() {
     return Games.find({});
@@ -308,8 +328,8 @@ if (Meteor.isServer) {
   Meteor.publish("game_roles", function() {
     return GameRoles.find({});
   });
-  Meteor.publish("directory", function() {
-    return Meteor.users.find({},{fields: {username:1}});
+  Meteor.publish("user_presences", function() {
+    return Meteor.users.find({"status.online":true}, {fields:{username:1}});
   });
   Meteor.startup(function () {
     if (AllRoles.find().count() === 0) {
@@ -343,7 +363,7 @@ if (Meteor.isServer) {
       }
     });
     if (nightDone) {
-      Games.update(gameid, {$set: {"gameState": "Day"}});
+      Games.update(gameid, {$set: {"gameState": "Day", "timestamps.day" : new Date()}});
     }
   }
   function checkDayDone(gameid) {
@@ -393,7 +413,7 @@ if (Meteor.isServer) {
           }
         }
       });
-      Games.update(gameid, {$set: {"gameState": "Done"}});
+      Games.update(gameid, {$set: {"gameState": "Done", "timestamps.done" : new Date()}});
     }
   }
 
@@ -507,7 +527,7 @@ if (Meteor.isServer) {
       });
 
       // Change state to night
-      Games.update({_id:game._id}, {$set: {"gameState": "Night"}});
+      Games.update({_id:game._id}, {$set: {"gameState": "Night", "timestamps.night" : new Date()}});
 
       // Check if night is already done
       checkNightDone(game._id);

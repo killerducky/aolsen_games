@@ -58,7 +58,7 @@
           {{/each}}
           </td>
           <td class="hidden-xs">None</td>
-          <td class="hidden-xs">TBD</td>
+          <td class="hidden-xs">{{daytimer}}</td>
           <td>
             <a href="/game/{{_id}}">
             <button class="open-game btn btn-info" data-toggle="tooltip" title="Join Game Room">
@@ -77,7 +77,7 @@
 <template name="userList">
   <ul class="list-inline">
     <li>Users</li>
-    {{#each findAllUsers}}
+    {{#each onlineUsers}}
       <li> {{username}} </li>
     {{/each}}
   </ul>
@@ -93,12 +93,12 @@
     {{>nightTransitionModal}}
   {{/if}}
   {{#if gameState}}
-    <table class="table table-bordered">
+    <table id="showGame" class="table table-bordered">
       {{>gameStateActions}}
       {{>playerListT}}
       {{>addRolesT}}
       {{>listRolesT}}
-      <tr><td>State</td>             <td>{{gameState}}</td></tr>
+      <tr><td>State</td>             <td>{{gameState}} {{timer}}</td></tr>
       <tr><td>Your original role</td><td>{{myRole}}</td></tr>
       <tr><td>Night Results</td>     <td>{{myNightResults}}</td></tr>
     </table>
@@ -339,9 +339,10 @@
       <li><button type="submit" class="btn btn-primary">Submit</button></li>
     </ul>
     {{#if myVote}}
-      Currently you are voting for {{myinfo.voted_for}}. You may change your vote at any time until everyone votes for someone.
+      <p>You voted for {{myVote}}.</p>
+      <p>Daytime will continue until all players have voted, or the timer expires.</p>
     {{else}}
-      Currently you are voting to continue daytime. You may change your vote at any time until everyone votes for someone.
+      You voted to continue daytime.
     {{/if}}
   </form>
 </template>
