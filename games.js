@@ -6,6 +6,7 @@ GamePlayers = new Mongo.Collection("game_players");
 GameRoles   = new Mongo.Collection("game_roles"); // {gameid, roleid, name, order}
 TipOfTheDay = new Mongo.Collection("tips");
 Presences   = new Mongo.Collection("user_presences");
+Messages    = new Mongo.Collection("messages");   // {gameid, userid, username, creation_date, content}}
 
 // TODO: Move this to a separate file
 var GamePlayer = function (gameid, userid, username) {
@@ -144,6 +145,10 @@ if (Meteor.isClient) {
       return null;
     }
   });
+  UI.registerHelper("messages", function() {
+    var tmp = Messages.find({});
+    return Messages.find({gameid:this._id}, {sort:{creation_date:1}});
+  });
   Meteor.setInterval(function () {
     Session.set('time', new Date());
   }, 1000); 
@@ -219,8 +224,6 @@ if (Meteor.isClient) {
     }
     return str;
   }
-  Template.home.helpers({
-  });
   Template.home.rendered = function() {
     $("[data-toggle='tooltip']").tooltip();
   };
@@ -309,7 +312,23 @@ if (Meteor.isClient) {
       Meteor.call("voteSubmit", this, Meteor.userId(), result);
     },
   });
-
+  Template.chatT.events({
+    "submit form": function(event) {
+      event.preventDefault();
+      var msg = event.target.message.value;
+      if (msg) {
+        Meteor.call("addMessage", this._id, msg);
+      }
+      event.target.reset();
+    }
+  });
+  Template.chatT.rendered = function () {
+    $("#messages").scrollTop(1000000);
+  };
+  Tracker.autorun(function () {
+    var numMessages = Messages.find({}).count();
+    $("#messages").scrollTop(1000000);
+  });
   Accounts.ui.config({
     passwordSignupFields: "USERNAME_ONLY"
   });
@@ -330,6 +349,9 @@ if (Meteor.isServer) {
   });
   Meteor.publish("user_presences", function() {
     return Meteor.users.find({"status.online":true}, {fields:{username:1}});
+  });
+  Meteor.publish("messages", function() {
+    return Messages.find({});
   });
   Meteor.startup(function () {
     if (AllRoles.find().count() === 0) {
@@ -591,5 +613,14 @@ if (Meteor.isServer) {
       var pick = Math.floor((Math.random()*count));  // random number between 0 and count-1
       return TipOfTheDay.findOne({id:pick}).tip;
     },
+    addMessage: function(gameid, msg) {
+      Messages.insert({
+        "gameid" : gameid,
+        "userid" : Meteor.userId(),
+        "username" : Meteor.user().username,
+        "creation_date" : new Date(),
+        "content"  : msg
+      });
+    }
   });
 }

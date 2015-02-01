@@ -110,6 +110,8 @@
 
     {{>gameResultTableLogicT}}
 
+    {{>chatT}}
+
   {{else}}
     Game does not exist
   {{/if}}
@@ -285,7 +287,7 @@
 
 <template name="seerNight">
   <p>
-    <form id="seerform">
+    <form id="seerform" class="user-attention">
       Pick One player to Peek, or 2 cards from the middle.
       <ul>
         {{#each otherPlayers}}
@@ -301,7 +303,7 @@
 
 <template name="robberNight">
   <p>
-    <form id="robberform">
+    <form id="robberform" class="user-attention">
       Pick One player to Rob, or choose "Do not rob".
       <ul>
         {{#each otherPlayers}}
@@ -317,7 +319,7 @@
 
 <template name="dummyNight">
   <p>
-    <form id="dummyform">
+    <form id="dummyform" class="user-attention">
       {{myNightResults}}
       <ul>
         <li><button type="submit" class="btn btn-primary">Continue</button></li>
@@ -329,7 +331,7 @@
 </template>
 
 <template name="vote">
-  <form id="voteform">
+  <form id="voteform" class="user-attention">
     Vote for a player to kill
     <ul>
       {{#each otherPlayers}}
@@ -345,5 +347,23 @@
       You voted to continue daytime.
     {{/if}}
   </form>
+</template>
+
+<template name="chatT">
+  <div class="messages-container">
+    <div id="messages">
+      {{#each messages}}
+        <p>{{username}}: {{content}}</p>
+      {{/each}}
+    </div>
+    <div class="add-message">
+      <form class="form-horizontal">
+        <div class="form-group">
+          <input type="text" name="message" class="msginput col-sm-11">
+          <input type="submit" class="btn btn-primary send-message btn-xs col-sm-1" value="Send">
+        </div>
+      </form>
+    </div>
+  </div>
 </template>
 
