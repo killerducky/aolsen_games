@@ -479,16 +479,34 @@ if (Meteor.isServer) {
               target = pickRandomOtherGamePlayer(game, gamePlayer);
               Meteor.call("seerNightSubmit", game, gamePlayer.userid, target._id);
             }
+          } else {
+            Meteor.call("dummyNightSubmit", game, gamePlayer.userid);
           }
         }
       } else if (game.gameState === "Day") {
         if (!gamePlayer.myinfo.voted_for) {
+          var str;
+          if (gamePlayer.myinfo.orig_role === "Werewolf") {
+            if (Math.random() > 0.5) {
+              str = "I'm a Villager. My night note: You are a Villager, so you have no special night abilities";
+            } else {
+              str = "I'm a Robber. My night note: Did not rob"
+            }
+          } else if (gamePlayer.myinfo.orig_role === "Robber" && gamePlayer.myinfo.night_result === "Werewolf") {
+            if (Math.random() > 0.5) {
+              str = "I'm a Villager. My night note: You are a Villager, so you have no special night abilities";
+            } else {
+              str = "I'm a Robber. My night note: Did not rob"
+            }
+          } else {
+            str = "I'm a " + gamePlayer.myinfo.orig_role + ". My night note: " + nightResult(game._id, gamePlayer._id);
+          }
           Messages.insert({
             "gameid" : gameid,
             "userid" : gamePlayer.userid,
             "username" : gamePlayer.username,
             "creation_date" : new Date(),
-            "content"  : "good luck"
+            "content"  : str
           });
           target = pickRandomOtherGamePlayer(game, gamePlayer);
           Meteor.call("voteSubmit", game, gamePlayer.userid, target._id);
@@ -632,6 +650,13 @@ if (Meteor.isServer) {
 
       // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night", "timestamps.night" : new Date()}});
+      Messages.insert({
+        "gameid" : game._id,
+        "userid" : null,
+        "username" : null,
+        "creation_date" : new Date(),
+        "content"  : "New game starting, it is now Night"
+      });
 
       // bots make moves
       botActions(game._id);
