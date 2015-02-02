@@ -134,27 +134,29 @@
 
 <template name="gameStateActions">
   <tr>
-  <td>Actions</td>
-  <td>
-  {{#if isOwnerThisGame}}
-    <button class="start-game btn btn-info" data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
-    <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-remove"></span></button>
-  {{else}}
-    {{#if gameStateTest "Creating"}}
-      {{#if isPlayingThisGame}}
-        <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
-        <span class="glyphicon glyphicon-minus"></span>
-        </button>
+    <td>Actions</td>
+    <td>
+      {{#if isOwnerThisGame}}
+        <button class="start-game btn btn-info"  data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
+        <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-trash"></span></button>
+        <button class="add-bot btn btn-info"     data-toggle="tooltip" title="Add Robot Player"><span class="glyphicon glyphicon-flash"></span></button>
+        <button class="del-bot btn btn-info"     data-toggle="tooltip" title="Delete Robot Player"><span class="glyphicon glyphicon-remove"></span></button>
       {{else}}
-        <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
-        <span class="glyphicon glyphicon-plus"></span>
-        </button>
+        {{#if gameStateTest "Creating"}}
+          {{#if isPlayingThisGame}}
+            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
+            <span class="glyphicon glyphicon-minus"></span>
+            </button>
+          {{else}}
+            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
+            <span class="glyphicon glyphicon-plus"></span>
+            </button>
+          {{/if}}
+        {{else}}
+          N/A
+        {{/if}}
       {{/if}}
-    {{else}}
-      N/A
-    {{/if}}
-  {{/if}}
-  </td>
+    </td>
   </tr>
 </template>
 
