@@ -83,7 +83,7 @@ if (Meteor.isClient) {
     if (this.name === "Werewolf") { return "W"; }
     else if (this.name === "Seer") { return "S"; }
     else if (this.name === "Robber") { return "R"; }
-    else if (this.name === "Troublemaker") { return "TM"; }
+    else if (this.name === "Troublemaker") { return "T"; }
     else if (this.name === "Insomniac") { return "I"; }
     else if (this.name === "Villager") { return "V"; }
     else { return "?"; }
@@ -466,14 +466,14 @@ if (Meteor.isServer) {
       if (game.gameState === "Night") {
         if (!gamePlayer.myinfo.night_done) {
           if (gamePlayer.myinfo.orig_role === "Robber") {
-            if (Math.random()>0.5) {
+            if (Math.random()<0.25) {
               Meteor.call("robberNightSubmit", game, gamePlayer.userid, "nobody");
             } else {
               target = pickRandomOtherGamePlayer(game, gamePlayer);
               Meteor.call("robberNightSubmit", game, gamePlayer.userid, target._id);
             }
           } else if (gamePlayer.myinfo.orig_role === "Seer") {
-            if (Math.random()>0.5) {
+            if (Math.random()<0.5) {
               Meteor.call("seerNightSubmit", game, gamePlayer.userid, "middle");
             } else {
               target = pickRandomOtherGamePlayer(game, gamePlayer);
@@ -487,13 +487,13 @@ if (Meteor.isServer) {
         if (!gamePlayer.myinfo.voted_for) {
           var str;
           if (gamePlayer.myinfo.orig_role === "Werewolf") {
-            if (Math.random() > 0.5) {
+            if (Math.random() < 0.5) {
               str = "I'm a Villager. My night note: You are a Villager, so you have no special night abilities";
             } else {
               str = "I'm a Robber. My night note: Did not rob"
             }
           } else if (gamePlayer.myinfo.orig_role === "Robber" && gamePlayer.myinfo.night_result === "Werewolf") {
-            if (Math.random() > 0.5) {
+            if (Math.random() < 0.5) {
               str = "I'm a Villager. My night note: You are a Villager, so you have no special night abilities";
             } else {
               str = "I'm a Robber. My night note: Did not rob"
@@ -650,6 +650,13 @@ if (Meteor.isServer) {
 
       // Change state to night
       Games.update({_id:game._id}, {$set: {"gameState": "Night", "timestamps.night" : new Date()}});
+      Messages.insert({
+        "gameid" : game._id,
+        "userid" : null,
+        "username" : null,
+        "creation_date" : new Date(),
+        "content"  : "--------------------"
+      });
       Messages.insert({
         "gameid" : game._id,
         "userid" : null,
