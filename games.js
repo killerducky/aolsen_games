@@ -62,7 +62,18 @@ function shuffleArray(array) {
   return array;
 }
 
+getUserLanguage = function () {
+  return Session.get("language") || "en";
+}
+
 if (Meteor.isClient) {
+  Meteor.startup(function () {
+    TAPi18n.setLanguage(getUserLanguage())
+      .done(function() {})
+      .fail(function(errmsg) {
+        console.log(errmsg);
+      })
+  });
   UI.registerHelper("players", function() {
     return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
   });

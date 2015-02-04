@@ -11,3 +11,4 @@ nemo64:bootstrap
 less
 iron:router
 mizzao:user-status
+tap:i18n

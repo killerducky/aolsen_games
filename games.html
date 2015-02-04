@@ -177,7 +177,7 @@
     <tr><td>Add Role</td>
     <td>
     {{#each all_roles}}
-      <button class="add-role btn btn-default" data-game="{{../_id}}">{{name}}</button>
+      <button class="add-role btn btn-default" data-game="{{../_id}}">{{_ name}}</button>
     {{/each}}
     </td>
     </tr>
@@ -191,16 +191,16 @@
     {{#if gameStateTest "Creating"}}
       {{#if isOwnerThisGame}}
         {{#each game_roles}}
-          <button class="delete-role btn btn-default">{{name}}</button>
+          <button class="delete-role btn btn-default">{{_ name}}</button>
         {{/each}}
       {{else}}
         {{#each game_roles}}
-          {{name}}
+          {{_ name}}
         {{/each}}
       {{/if}}
     {{else}}
       {{#each game_roles}}
-        {{name}}
+        {{_ name}}
       {{/each}}
     {{/if}}
   </td></tr>
@@ -273,7 +273,7 @@
   </table>
   <p> Unused Roles:
     {{#each myinfo.unused_roles}}
-      {{name}}
+      {{_ name}}
     {{/each}}
   </p>
 </template>
