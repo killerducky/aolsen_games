@@ -39,6 +39,10 @@
 </template>
 
 <template name="home">
+  <div class="jumbotron">
+    <h1>{{_ "One_Night_Werewolf"}}</h1>
+    <p>{{_ "Intro"}}</p>
+  </div>
   {{#if currentUser}}
     <table class="table table-bordered">
       <caption>Current games</caption>
@@ -141,6 +145,11 @@
         <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-trash"></span></button>
         <button class="add-bot btn btn-info"     data-toggle="tooltip" title="Add Robot Player"><span class="glyphicon glyphicon-flash"></span></button>
         <button class="del-bot btn btn-info"     data-toggle="tooltip" title="Delete Robot Player"><span class="glyphicon glyphicon-remove"></span></button>
+        {{#if example_game}}
+          <button class="tog-example btn btn-info" data-toggle="tooltip" title="Example Game Mode"><span class="glyphicon glyphicon-eye-open"></span></button>
+        {{else}}
+          <button class="tog-example btn btn-info" data-toggle="tooltip" title="Turn on Example Game Mode"><span class="glyphicon glyphicon-eye-close"></span></button>
+        {{/if}}
       {{else}}
         {{#if gameStateTest "Creating"}}
           {{#if isPlayingThisGame}}
@@ -154,6 +163,9 @@
           {{/if}}
         {{else}}
           N/A
+        {{/if}}
+        {{#if example_game}}
+          <button class="btn btn-info" data-toggle="tooltip" title="Example Game Mode"><span class="glyphicon glyphicon-eye-open"></span></button>
         {{/if}}
       {{/if}}
     </td>
@@ -195,12 +207,16 @@
         {{/each}}
       {{else}}
         {{#each game_roles}}
+          <a tabindex="0" data-toggle="popover" data-trigger="focus" data-placement="top" data-content="{{_ roleDesc}}">
           {{_ name}}
+          </a>
         {{/each}}
       {{/if}}
     {{else}}
       {{#each game_roles}}
+        <a tabindex="0" data-toggle="popover" data-trigger="focus" data-placement="top" data-content="{{_ roleDesc}}">
         {{_ name}}
+        </a>
       {{/each}}
     {{/if}}
   </td></tr>
@@ -244,10 +260,9 @@
   <table class="table table-bordered">
     <tr>
       <th width="10%"                  >Name</th>
-      <th width="10%"                  >Original Role</th>
-      <th width="10%"                  >Final Role</th>
-      <th width="20%" class="hidden-xs">Night Actions</th>
-      <th width="10%" class="hidden-xs">Voted For</th>
+      <th width="10%"                  >Role</th>
+      <th width="30%" class="hidden-xs">Night Actions</th>
+      <th width="10%"                  >Voted For</th>
       <th width="5%"                   >#V</th>
     </tr>
     {{#if gameStateTest "Done"}}
@@ -279,11 +294,21 @@
 </template>
 
 <template name="fullPlayerInfoRow">
-  <td width="10%"                  >{{username}}</td>
-  <td width="10%"                  >{{myinfo.orig_role}}</td>
-  <td width="10%"                  >{{myinfo.curr_role}}</td>
+  <td width="10%"                  >
+    {{#if myinfo.died}}
+      <s>{{username}}</s>
+    {{else}}
+      {{username}}
+    {{/if}}
+  </td>
+  <td width="10%"                  >
+    {{#if thisRoleChanged}}
+      <s>{{myinfo.orig_role}}</s><br>
+    {{/if}}
+    {{myinfo.curr_role}}
+  </td>
   <td width="20%" class="hidden-xs">{{thisNightResults}}</td>
-  <td width="10%" class="hidden-xs">{{gamePlayerId_username myinfo.voted_for}}</td>
+  <td width="10%"                  >{{gamePlayerId_username myinfo.voted_for}}</td>
   <td width="5%"                   >{{myinfo.received_votes}}</td>
 </template>
 

@@ -4,6 +4,8 @@
   "Robber"       : "도둑"       ,
   "Troublemaker" : "문제아"     ,
   "Insomniac"    : "불면증환자" ,
-  "Villager"     : "동네사람"     
-}
+  "Villager"     : "동네사람"     ,
 
+  "One_Night_Werewolf" : "One Night Werewolf",
+  "Intro"              : "In One Night Werewolf, each player takes on the role of a Villager, a Werewolf, or a special character. It's your job to figure out who the Werewolves are and to kill at least one of them in order to win... unless you've become a Werewolf yourself!"
+}

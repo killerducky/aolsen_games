@@ -138,6 +138,10 @@ if (Meteor.isClient) {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
     return gamePlayer && gamePlayer.myinfo.orig_role === role;
   });
+  UI.registerHelper("thisRoleChanged", function() {
+    var gamePlayer = GamePlayers.findOne(this._id);
+    return gamePlayer && gamePlayer.myinfo.orig_role !== gamePlayer.myinfo.curr_role;
+  });
   UI.registerHelper("randomTip", function() {
     Meteor.call("randomTip", function(err, data) {
       if (err) { console.log (err); }
@@ -160,6 +164,9 @@ if (Meteor.isClient) {
   UI.registerHelper("messages", function() {
     var tmp = Messages.find({});
     return Messages.find({gameid:this._id}, {sort:{creation_date:1}});
+  });
+  UI.registerHelper("roleDesc", function() {
+    return this.name + "_desc";
   });
   Meteor.setInterval(function () {
     Session.set('time', new Date());
@@ -238,6 +245,11 @@ if (Meteor.isClient) {
   }
   Template.home.rendered = function() {
     $("[data-toggle='tooltip']").tooltip();
+    $("[data-toggle='popover']").popover();
+  };
+  Template.listRolesT.rendered = function() {
+    $("[data-toggle='tooltip']").tooltip();
+    $("[data-toggle='popover']").popover();
   };
   Template.home.events({
     "click .add-game": function() {
@@ -282,6 +294,9 @@ if (Meteor.isClient) {
     },
     "click .del-bot": function() {
       Meteor.call("leaveGame", this._id, {bot:true});
+    },
+    "click .tog-example": function() {
+      Meteor.call("toggleExample", this._id);
     },
     "click .toggle-join": function() {
       result = isPlayingThisGameTest(this);
@@ -451,7 +466,7 @@ if (Meteor.isServer) {
           atLeastOneWolf = true;
         }
       });
-      for (var i; i < mostVotedPlayers.length; i++) {
+      for (var i=0; i < mostVotedPlayers.length; i++) {
         GamePlayers.update(mostVotedPlayers[i], {$set:{"myinfo.died":true}});
       }
       GamePlayers.find({gameid:gameid}).forEach(function (gamePlayer) {
@@ -681,6 +696,10 @@ if (Meteor.isServer) {
 
       // Check if night is already done
       checkNightDone(game._id);
+    },
+    toggleExample: function(gameid) {
+      var game = Games.findOne(gameid);
+      Games.update(gameid, {$set: {example_game: !game.example_game}});
     },
     seerNightSubmit: function(game, userid, targetid) {
       var night_targets;
