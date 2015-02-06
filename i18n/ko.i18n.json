@@ -1,11 +1,38 @@
-{ 
+{
+  "One_Night_Werewolf" : "하룻밤",
+  "Intro"              : "하룻밤 늑대인간 게임에서 각 플레이어는 동네사람이나 늑대인간이나 특별 인물을 되습니다.  당신은 누구 늑대인간인지 알게되고 죽여야 해는데 늑대인간 인물으로 변화했으면 살아야 되겠지요.",
+
   "Werewolf"     : "늑대인간"   ,
   "Seer"         : "예언자"     ,
   "Robber"       : "도둑"       ,
   "Troublemaker" : "문제아"     ,
   "Insomniac"    : "불면증환자" ,
-  "Villager"     : "동네사람"     ,
+  "Villager"     : "시민"       ,
 
-  "One_Night_Werewolf" : "One Night Werewolf",
-  "Intro"              : "In One Night Werewolf, each player takes on the role of a Villager, a Werewolf, or a special character. It's your job to figure out who the Werewolves are and to kill at least one of them in order to win... unless you've become a Werewolf yourself!"
+  "Werewolf_desc"     : "밤엔 늑대인가들 다 서로 누구인지 확인합니다. 늑대인가 한명만 있으면 사용하지 않은 인물 하나 봅니다.",
+  "Seer_desc"         : "밤엔 다른 플레이어 1명의 인물 또는 사용하지 않은 인물들 중 2개를 봅니다.",
+  "Robber_desc"       : "밤엔 자신의 인물과 다른 플레이어 1명의 인물을 교환하고, 바꿔온 인물을 봅니다.",
+  "Troublemaker_desc" : "밤엔 다른 플레이어 2명의 인물을 보지 않고 바꿉니다.",
+  "Insomniac_desc"    : "밤엔 잠에서 깨고 자신의 인물을 봅니다 (바꾸지 확인 위해서).",
+  "Villager_desc"     : "능력 없습니다."
 }
+
+  /*
+  하룻밤 늑대인간 게임에서는 하루 밤과 하루 낮만 진행합니다.
+  참가하는 플레이어의 수보다 3장 더 많은 인물 카드들을 사용합니다.
+  인물들에는 아무 능력이 없는 시민들과 저마다 고유의 능력을 가진 특별 인물들, 그리고 늑대인간이 있습니다.
+
+  각 플레이어는 그 인물 카드들 중 1장을 받고 비공개 상태로 유지합니다.
+  그리고 남은 인물 카드 3장은 테이블 가운데에 비공개 상태로 놓입니다.
+
+그 다음에 마피아 게임에서처럼, 사회자가 진행하는 밤에 각 특별 인물은 자신의 능력을 사용할 수 있습니다.
+
+게임의 종료와 승리
+
+하루 밤과 하루 낮 (투표)가 끝나면 게임도 끝납니다.
+
+최소 1명의 늑대인간을 처형했거나, 또는 늑대인간이 없던 게임에서 아무도 처형당하지 않았다면 시민들이 승리합니다.
+최소 1명의 시민이 처형당했지만 어떤 늑대인간도 처형당하지 않았다면 늑대인간들이 승리합니다.
+몇몇 특별 인물에는 또 다른 승리 조건이 있습니다.
+
+*/

@@ -63,17 +63,10 @@ function shuffleArray(array) {
 }
 
 getUserLanguage = function () {
-  return Session.get("language") || "en";
+  return (Meteor.user() && Meteor.user().profile.language) || "en";
 }
 
 if (Meteor.isClient) {
-  Meteor.startup(function () {
-    TAPi18n.setLanguage(getUserLanguage())
-      .done(function() {})
-      .fail(function(errmsg) {
-        console.log(errmsg);
-      })
-  });
   UI.registerHelper("players", function() {
     return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
   });
@@ -143,10 +136,13 @@ if (Meteor.isClient) {
     return gamePlayer && gamePlayer.myinfo.orig_role !== gamePlayer.myinfo.curr_role;
   });
   UI.registerHelper("randomTip", function() {
-    Meteor.call("randomTip", function(err, data) {
-      if (err) { console.log (err); }
-      Session.set("randomTip", data);
-    });
+    if (!Session.get("randomTip")) {
+      console.log("randomTip");
+      Meteor.call("randomTip", function(err, data) {
+        if (err) { console.log (err); }
+        Session.set("randomTip", data);
+      });
+    }
     return Session.get("randomTip");
   });
   UI.registerHelper("thisNightResults", function() {
@@ -256,6 +252,19 @@ if (Meteor.isClient) {
       Meteor.call("addGame");
     },
   });
+  Template.appBody.events({
+    "click #English": function() {
+      Meteor.users.update({_id:Meteor.userId()}, {$set:{"profile.language": "en"}});
+    },
+    "click #Korean": function() {
+      Meteor.users.update({_id:Meteor.userId()}, {$set:{"profile.language": "ko"}});
+    },
+  });
+  Template.appBody.rendered = function () {
+    this.autorun(function() {
+      TAPi18n.setLanguage(getUserLanguage())
+    });
+  };
   Template.nightTransitionModal.rendered = function() {
     console.log("ntm rendered");
     $(".nightTransitionModal").on("hidden", function() {
@@ -342,6 +351,7 @@ if (Meteor.isClient) {
     "submit form": function(event) {
       event.preventDefault();
       var result = $("input[name='voteplayer']:checked").val();
+      console.log("voted", result);
       Meteor.call("voteSubmit", this, Meteor.userId(), result);
     },
   });
@@ -382,7 +392,7 @@ if (Meteor.isServer) {
   });
   Meteor.publish("public_users", function() {
     //return Meteor.users.find({"status.online":true}, {fields:{username:1}});
-    return Meteor.users.find({$or: [{"status.online":true}, {"bot":true}]}, {fields:{username:1}});
+    return Meteor.users.find({$or: [{"status.online":true}, {"bot":true}]}, {fields:{username:1, profile:1}});
   });
   Meteor.publish("messages", function() {
     return Messages.find({});

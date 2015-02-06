@@ -30,9 +30,22 @@
     </nav>
     -->
     <ul class="list-inline">
-      <li><a href="#">{{> loginButtons}}</a></li>
+      <li><a>{{> loginButtons}}</a></li>
       <li><a href="/" padding="0">Home</a></li>
       <li><a href="/about" padding-top="0" padding-bottom="0">About</a></li>
+      {{#if currentUser}}
+      <li>
+        <div class="btn-group">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+            Language <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="#" id="English">English</a></li>
+            <li><a href="#" id="Korean">한국어</a></li>
+          </ul>
+        </div>
+      </li>
+      {{/if}}
     </ul>
     {{> yield}}
   </div>
@@ -104,13 +117,10 @@
       {{>listRolesT}}
       <tr><td>State</td>             <td>{{gameState}} {{timer}}</td></tr>
       <tr><td>Your original role</td><td>{{myRole}}</td></tr>
-      <tr><td>Night Results</td>     <td>{{myNightResults}}</td></tr>
+      <tr><td>Night Actions</td>     <td>{{>nightActions}}</td>
+      </tr>
+      <tr><td>Vote</td>              <td>{{>vote}}</td></tr>
     </table>
-
-    {{#if gameStateTest "Creating"}}
-    {{else}}
-      {{>userActions}}
-    {{/if}}
 
     {{>gameResultTableLogicT}}
 
@@ -145,11 +155,13 @@
         <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-trash"></span></button>
         <button class="add-bot btn btn-info"     data-toggle="tooltip" title="Add Robot Player"><span class="glyphicon glyphicon-flash"></span></button>
         <button class="del-bot btn btn-info"     data-toggle="tooltip" title="Delete Robot Player"><span class="glyphicon glyphicon-remove"></span></button>
-        {{#if example_game}}
-          <button class="tog-example btn btn-info" data-toggle="tooltip" title="Example Game Mode"><span class="glyphicon glyphicon-eye-open"></span></button>
-        {{else}}
-          <button class="tog-example btn btn-info" data-toggle="tooltip" title="Turn on Example Game Mode"><span class="glyphicon glyphicon-eye-close"></span></button>
-        {{/if}}
+        <button class="tog-example btn btn-info" data-toggle="tooltip" title="Toggle Example Game Mode">
+          {{#if example_game}}
+            <span class="glyphicon glyphicon-eye-open"></span>
+          {{else}}
+            <span class="glyphicon glyphicon-eye-close"></span>
+          {{/if}}
+        </button>
       {{else}}
         {{#if gameStateTest "Creating"}}
           {{#if isPlayingThisGame}}
@@ -223,24 +235,27 @@
 </template>
 
 
-<template name="userActions">
-  {{#if gameStateTest "Night"}}
-    {{#if myNightDone}}
-      <div class="user-attention">
-      <p>Waiting for other players to finish their Night actions.</p>
-      <p>Tip: {{randomTip}}</p>
-      </div>
+<template name="nightActions">
+  {{#if gameStateTest "Creating"}}
+    na
+  {{else}}
+    {{#if gameStateTest "Night"}}
+      {{#if myNightDone}}
+        <div class="user-attention">
+        <p>{{myNightResults}}</p>
+        <p>Waiting for other players to finish their Night actions.</p>
+        <p>Tip: {{randomTip}}</p>
+        </div>
+      {{else}}
+        {{#if myRoleTest "Seer"    }} {{> seerNight  }} {{else}}
+        {{#if myRoleTest "Robber"  }} {{> robberNight}} {{else}}
+                                      {{> dummyNight}}
+        {{/if}}
+        {{/if}}
+      {{/if}}
     {{else}}
-      {{#if myRoleTest "Seer"    }} {{> seerNight  }} {{else}}
-      {{#if myRoleTest "Robber"  }} {{> robberNight}} {{else}}
-                                    {{> dummyNight}}
-      {{/if}}
-      {{/if}}
+      {{myNightResults}}
     {{/if}}
-  {{/if}}
-
-  {{#if gameStateTest "Day"}}
-    <p>{{>vote}}</p>
   {{/if}}
 </template>
 
@@ -358,22 +373,26 @@
 </template>
 
 <template name="vote">
-  <form id="voteform" class="user-attention">
-    Vote for a player to kill
-    <ul>
-      {{#each otherPlayers}}
-        <li><input type="radio" name="voteplayer" value="{{this._id}}">{{username}}</li>
-      {{/each}}
-      <li><input type="radio" name="voteplayer" value="nobody" checked>Continue daytime</li>
-      <li><button type="submit" class="btn btn-primary">Submit</button></li>
-    </ul>
-    {{#if myVote}}
-      <p>You voted for {{myVote}}.</p>
-      <p>Daytime will continue until all players have voted, or the timer expires.</p>
-    {{else}}
-      You voted to continue daytime.
-    {{/if}}
-  </form>
+  {{#if gameStateTest "Day"}}
+    <form id="voteform" class="user-attention">
+      Vote for a player to kill
+      <ul>
+        {{#each otherPlayers}}
+          <li><input type="radio" name="voteplayer" value="{{this._id}}">{{username}}</li>
+        {{/each}}
+        <li><input type="radio" name="voteplayer" value="nobody" checked>Continue daytime</li>
+        <li><button type="submit" class="btn btn-primary">Submit</button></li>
+      </ul>
+      {{#if myVote}}
+        <p>You voted for {{myVote}}.</p>
+        <p>Daytime will continue until all players have voted, or the timer expires.</p>
+      {{else}}
+        You voted to continue daytime.
+      {{/if}}
+    </form>
+  {{else}}
+    {{myVote}}
+  {{/if}}
 </template>
 
 <template name="chatT">
