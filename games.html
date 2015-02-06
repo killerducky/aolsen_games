@@ -6,64 +6,45 @@
 
 <template name="appBody">
   <div class="container">
-    <!--
-    <nav class="navbar navbar-default" role="navigation">
-      <div class="nav navbar-nav">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-      </div>
-      <ul class="nav navbar-nav navbar-left">
-        <li><a class="navbar-brand" href="#">ONW</a></li>
-      </ul>
-      <div class="navbar-collapse collapse">
-        <ul class="nav navbar-nav navbar-left">
-          <li><a href="/" padding="0">Home</a></li>
-          <li><a href="/about" padding-top="0" padding-bottom="0">About</a></li>
-        </ul>
-        <ul class="nav navbar-nav navbar-right">
-          <li><a href="#">{{> loginButtons align="right"}}</a></li>
-        </ul>
-      </div>
-    </nav>
-    -->
-    <ul class="list-inline">
-      <li><a>{{> loginButtons}}</a></li>
-      <li><a href="/" padding="0">Home</a></li>
-      <li><a href="/about" padding-top="0" padding-bottom="0">About</a></li>
-      {{#if currentUser}}
-      <li>
-        <div class="btn-group">
-          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-            Language <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu" role="menu">
-            <li><a href="#" id="English">English</a></li>
-            <li><a href="#" id="Korean">한국어</a></li>
-          </ul>
-        </div>
-      </li>
-      {{/if}}
-    </ul>
+    {{> nav}}
     {{> yield}}
   </div>
 </template>
 
+<template name="nav">
+  <ul class="list-inline">
+    <li><a>{{> loginButtons}}</a></li>
+    <li><a href="/" padding="0">{{_ "Home"}}</a></li>
+    <li><a href="/about" padding-top="0" padding-bottom="0">{{_ "About"}}</a></li>
+    {{#if currentUser}}
+    <li>
+      <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+          Language <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a href="#" id="English">English</a></li>
+          <li><a href="#" id="Korean">한국어</a></li>
+        </ul>
+      </div>
+    </li>
+    {{/if}}
+  </ul>
+</template>
+
 <template name="home">
   <div class="jumbotron">
-    <h1>{{_ "One_Night_Werewolf"}}</h1>
+    <h1>{{_ "One Night Werewolf"}}</h1>
     <p>{{_ "Intro"}}</p>
   </div>
   {{#if currentUser}}
     <table class="table table-bordered">
       <caption>Current games</caption>
       <tr>
-        <th width="10%"                  >State</th>
-        <th width="30%"                  >Roles</th>
-        <th width="10%" class="hidden-xs">Day Timer</th>
-        <th width="10%" class="hidden-xs">Num Players</th>
+        <th width="10%"                  >{{_ "State"}}</th>
+        <th width="30%"                  >{{_ "Roles"}}</th>
+        <th width="10%" class="hidden-xs">{{_ "Day Timer"}}</th>
+        <th width="10%" class="hidden-xs">{{_ "Num Players"}}</th>
         <th width="20%"                  ></th> <!-- action buttons -->
       </tr>
       {{#each findAllGames}}
@@ -74,8 +55,8 @@
             {{shortRoleName}}
           {{/each}}
           </td>
-          <td class="hidden-xs">None</td>
           <td class="hidden-xs">{{daytimer}}</td>
+          <td class="hidden-xs">--</td>
           <td>
             <a href="/game/{{_id}}">
             <button class="open-game btn btn-info" data-toggle="tooltip" title="Join Game Room">
@@ -101,8 +82,8 @@
 </template>
 
 <template name="about">
-  <p>One Night Werewolf</p>
-  <p>Version: 0.1</p>
+  <p>{{_ "One Night Werewolf"}}</p>
+  <p>{{_ "Version"}} 0.1</p>
 </template>
 
 <template name="showGame">
@@ -115,11 +96,11 @@
       {{>playerListT}}
       {{>addRolesT}}
       {{>listRolesT}}
-      <tr><td>State</td>             <td>{{gameState}} {{timer}}</td></tr>
-      <tr><td>Your original role</td><td>{{myRole}}</td></tr>
-      <tr><td>Night Actions</td>     <td>{{>nightActions}}</td>
+      <tr><td>{{_ "State"}}</td>             <td>{{gameState}} {{timer}}</td></tr>
+      <tr><td>{{_ "Your original role"}}</td><td>{{myRole}}</td></tr>
+      <tr><td>{{_ "Night Actions"}}</td>     <td>{{>nightActions}}</td>
       </tr>
-      <tr><td>Vote</td>              <td>{{>vote}}</td></tr>
+      <tr><td>{{_ "Voted For"}}</td>              <td>{{>vote}}</td></tr>
     </table>
 
     {{>gameResultTableLogicT}}
@@ -148,7 +129,7 @@
 
 <template name="gameStateActions">
   <tr>
-    <td>Actions</td>
+    <td>{{_ "Actions"}}</td>
     <td>
       {{#if isOwnerThisGame}}
         <button class="start-game btn btn-info"  data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
@@ -185,7 +166,7 @@
 </template>
 
 <template name="playerListT">
-  <tr><td>Players</td>
+  <tr><td>{{_ "Players"}}</td>
   <td>
   {{#each players}}
     {{username}}
@@ -210,7 +191,7 @@
 </template>
 
 <template name="listRolesT">
-  <tr><td>Game roles</td>
+  <tr><td>{{_ "Game roles"}}</td>
   <td>
     {{#if gameStateTest "Creating"}}
       {{#if isOwnerThisGame}}
@@ -274,11 +255,11 @@
 <template name="gameResultTable">
   <table class="table table-bordered">
     <tr>
-      <th width="10%"                  >Name</th>
-      <th width="10%"                  >Role</th>
-      <th width="30%" class="hidden-xs">Night Actions</th>
-      <th width="10%"                  >Voted For</th>
-      <th width="5%"                   >#V</th>
+      <th width="10%"                  >{{_ "Name"}}</th>
+      <th width="10%"                  >{{_ "Role"}}</th>
+      <th width="30%" class="hidden-xs">{{_ "Night Actions"}}</th>
+      <th width="10%"                  >{{_ "Voted For"}}</th>
+      <th width="5%"                   >{{_ "#V"}}</th>
     </tr>
     {{#if gameStateTest "Done"}}
       {{#each players}}

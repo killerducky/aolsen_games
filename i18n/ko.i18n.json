@@ -1,5 +1,5 @@
 {
-  "One_Night_Werewolf" : "하룻밤",
+  "One Night Werewolf" : "하룻밤 늑대인간",
   "Intro"              : "하룻밤 늑대인간 게임에서 각 플레이어는 동네사람이나 늑대인간이나 특별 인물을 되습니다.  당신은 누구 늑대인간인지 알게되고 죽여야 해는데 늑대인간 인물으로 변화했으면 살아야 되겠지요.",
 
   "Werewolf"     : "늑대인간"   ,
@@ -14,7 +14,32 @@
   "Robber_desc"       : "밤엔 자신의 인물과 다른 플레이어 1명의 인물을 교환하고, 바꿔온 인물을 봅니다.",
   "Troublemaker_desc" : "밤엔 다른 플레이어 2명의 인물을 보지 않고 바꿉니다.",
   "Insomniac_desc"    : "밤엔 잠에서 깨고 자신의 인물을 봅니다 (바꾸지 확인 위해서).",
-  "Villager_desc"     : "능력 없습니다."
+  "Villager_desc"     : "능력 없습니다.",
+
+  "Home"  : "홈",
+  "About" : "정보",
+  "Version" : "버전",
+
+  // Main Page
+  // Games List
+  "State"        : "상태"    ,
+  "Roles"        : "인물 목록"  ,
+  "Day Timer"    : "낮 시간" ,
+  "Num Players"  : "선수 수" ,
+
+  // Game Page
+  // Game State
+  "Actions"       : "행동"       ,   // TODO
+  "Players"       : "선수 목록"  ,
+  "Game roles"    : "인물 목록"  ,
+  "Your original role" : "당신의 원래 인물" ,
+
+  // Game Results
+  "Name"          : "이름"     ,
+  "Role"          : "인물"     ,
+  "Night Actions" : "밤 행동"  ,
+  "Voted For"     : "투표"     ,
+  "#V"            : "투표수"
 }
 
   /*
