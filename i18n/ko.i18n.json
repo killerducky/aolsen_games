@@ -2,34 +2,36 @@
   "One Night Werewolf" : "하룻밤 늑대인간",
   "Intro"              : "하룻밤 늑대인간 게임에서 각 플레이어는 동네사람이나 늑대인간이나 특별 인물을 되습니다.  당신은 누구 늑대인간인지 알게되고 죽여야 해는데 늑대인간 인물으로 변화했으면 살아야 되겠지요.",
 
-  "Werewolf"     : "늑대인간"   ,
-  "Seer"         : "예언자"     ,
-  "Robber"       : "도둑"       ,
-  "Troublemaker" : "문제아"     ,
-  "Insomniac"    : "불면증환자" ,
-  "Villager"     : "시민"       ,
-
-  "Werewolf_desc"     : "밤엔 늑대인가들 다 서로 누구인지 확인합니다. 늑대인가 한명만 있으면 사용하지 않은 인물 하나 봅니다.",
-  "Seer_desc"         : "밤엔 다른 플레이어 1명의 인물 또는 사용하지 않은 인물들 중 2개를 봅니다.",
-  "Robber_desc"       : "밤엔 자신의 인물과 다른 플레이어 1명의 인물을 교환하고, 바꿔온 인물을 봅니다.",
-  "Troublemaker_desc" : "밤엔 다른 플레이어 2명의 인물을 보지 않고 바꿉니다.",
-  "Insomniac_desc"    : "밤엔 잠에서 깨고 자신의 인물을 봅니다 (바꾸지 확인 위해서).",
-  "Villager_desc"     : "능력 없습니다.",
-
   "Home"  : "홈",
   "About" : "정보",
   "Version" : "버전",
 
   // Main Page
   // Games List
-  "State"        : "상태"    ,
-  "Roles"        : "인물 목록"  ,
-  "Day Timer"    : "낮 시간" ,
-  "Num Players"  : "선수 수" ,
+  "State"        : "상태",
+  "Creating"     : "만들김",
+  "Day"          : "낮",
+  "Night"        : "밤",
+  "Done"         : "완성",
+  "Creating"     : "만들김",
+  "Roles"        : "인물 목록",
+  "Day Timer"    : "낮 시간",
+  "Num Players"  : "선수 수",
+  "Enter Game Room" : "게임방 입장",
+  "Create Game Room" : "게임방 만들기",
 
   // Game Page
   // Game State
   "Actions"       : "행동"       ,   // TODO
+  "Start Game"    : "게임 시작"  ,
+  "Delete Game"   : "게임 삭제"  ,
+  "Add Robot Player"           : "로봇 선수 추가",
+  "Delete Robot Player"        : "로봇 선수 빼기",
+  "Toggle Practice Game Mode"  : "연습한 게임 모드 토글",
+  "Join Game"                  : "가입",
+  "Leave Game"                 : "탈퇴",
+  "Practice Game Mode"         : "연습한 게임 모드",
+
   "Players"       : "선수 목록"  ,
   "Game roles"    : "인물 목록"  ,
   "Your original role" : "당신의 원래 인물" ,
@@ -39,25 +41,63 @@
   "Role"          : "인물"     ,
   "Night Actions" : "밤 행동"  ,
   "Voted For"     : "투표"     ,
-  "#V"            : "투표수"
+  "#V"            : "투표수",
+
+  "You are not playing this game" : "당신은 이 게임에 참가하지 않습니다.",
+
+  // Role strings
+  "Werewolf"       : "늑대인간"   ,
+  "Werewolf_desc"  : "밤엔 늑대인간들 다 서로 누구인지 확인합니다. 늑대인가 한명만 있으면 사용하지 않은 인물 하나 봅니다.",
+  "nr_ww"          : "당신만 __myrole__입니다. 사용하지 않은 인물들 3 중 1개는 __r1__입니다.",
+  "nr_ww_plural"   : "__myrole__들은 __players__입니다.",
+
+  "Seer"           : "예언자"     ,
+  "Seer_desc"      : "밤엔 다른 플레이어 1명의 인물 또는 사용하지 않은 인물들 중 2개를 봅니다.",
+  "seerPickText"   : "훔쳐본 선수 1면 선택 또는 사용하지 않은 인물들 3 중 2개를 봅니다.",
+  "2 cards from the middle" : "사용하지 않은 인물들 3 중 2개를 봅니다",
+  "seerNightResultsMiddlePeek" : "당신은 __myrole__여서 사용하지 않은 인물들 3 중 2개를 봤습니다. #__p1__=__r1__ #__p2__=__r2__",
+  "seerNightResultsPlayerPeek" : "당신은 __myrole__여서 __target__이 __target_role__입니다.",
+
+  "Robber"         : "도둑"       ,
+  "Robber_desc"    : "밤엔 자신의 인물과 다른 플레이어 1명의 인물을 교환하고, 바꿔온 인물을 봅니다.",
+  "robberPickText" : "도둑질 선수 선택",
+  "Do not rob"     : "도둑질 한지않기",
+  "Did not rob"    : "도둑질 하지않음",
+  "robberNightResults" : "__target__에서 __newrole__ 바꿨습니다.",
+
+  "Troublemaker"      : "문제아"     ,
+  "Troublemaker_desc" : "밤엔 다른 플레이어 2명의 인물을 보지 않고 바꿉니다.",
+
+  "Insomniac"       : "불면증환자" ,
+  "Insomniac_desc"  : "밤엔 잠에서 깨고 자신의 인물을 봅니다 (바꾸지 확인 위해서).",
+  "nr_i_wait"       : "당신은 불면증환자입니다. 곧 인물 바꾸지 안지 알게됐습니다.",
+  "nr_i_nochange"   : "당신은 여전히 불면증환자입니다.",
+  "nr_i_change"     : "당신은 __curr_role__로 됬습니다.",
+
+  "Villager_desc"   : "능력 없습니다.",
+  "Villager"        : "동네사람"       ,
+  "nr_v"            : "당신은 동네사람여서 특별 능력 없습니다.",
+
+  // Waiting
+  "nightWaiting" : "다른 선수들의 밤 행동 끝내기를 기달리줘습니다.",
+
+  // Vote
+  "votePrompt"   : "어느 선수를 죽여지 투표를 부쳐줘습니다.",
+  "voteDesc"     : "낮 선수들 다 투표를 부치기까지 또 타이머가 만료까지 계속함.",
+  "votePlayer"   : "당신은 __myVote__로 투표를 부쳤습니다.",
+  "voteContinue" : "당신은 낮 계속 투표를 부쳤습니다.",
+
+  // General
+  "Continue"          : "계속",
+  "Continue daytime"  : "낮 계속하기",
+  "Chat here!"        : "대화하기",
+  "Time left"         : "남은 시간",
+
+  // Tips
+  "Tip:"   : "귀띔",
+  "tip_0"  : "당신 늑대인간있으면 거짓말 준비해야 해습니다.",
+  //"tip_1"  : "If you're a Werewolf, you're not a liar -- anyone who says you're a liar is a liar!"
+  "tip_1"  : "낮 중에 투표를 바뀔 수도 되습니다."
+  //"tip_3"  : "Day ends when 1) everyone votes or 2) the timer expires and at least one person votes"
 }
 
-  /*
-  하룻밤 늑대인간 게임에서는 하루 밤과 하루 낮만 진행합니다.
-  참가하는 플레이어의 수보다 3장 더 많은 인물 카드들을 사용합니다.
-  인물들에는 아무 능력이 없는 시민들과 저마다 고유의 능력을 가진 특별 인물들, 그리고 늑대인간이 있습니다.
-
-  각 플레이어는 그 인물 카드들 중 1장을 받고 비공개 상태로 유지합니다.
-  그리고 남은 인물 카드 3장은 테이블 가운데에 비공개 상태로 놓입니다.
-
-그 다음에 마피아 게임에서처럼, 사회자가 진행하는 밤에 각 특별 인물은 자신의 능력을 사용할 수 있습니다.
-
-게임의 종료와 승리
-
-하루 밤과 하루 낮 (투표)가 끝나면 게임도 끝납니다.
-
-최소 1명의 늑대인간을 처형했거나, 또는 늑대인간이 없던 게임에서 아무도 처형당하지 않았다면 시민들이 승리합니다.
-최소 1명의 시민이 처형당했지만 어떤 늑대인간도 처형당하지 않았다면 늑대인간들이 승리합니다.
-몇몇 특별 인물에는 또 다른 승리 조건이 있습니다.
-
-*/

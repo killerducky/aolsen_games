@@ -4,7 +4,6 @@ AllRoles = new Mongo.Collection("all_roles");
 Games    = new Mongo.Collection("games");
 GamePlayers = new Mongo.Collection("game_players");
 GameRoles   = new Mongo.Collection("game_roles"); // {gameid, roleid, name, order}
-TipOfTheDay = new Mongo.Collection("tips");
 PublicUsers = new Mongo.Collection("public_users");
 Messages    = new Mongo.Collection("messages");   // {gameid, userid, username, creation_date, content}}
 
@@ -67,6 +66,9 @@ getUserLanguage = function () {
 }
 
 if (Meteor.isClient) {
+  Meteor.startup(function() {
+    TAPi18n.setLanguage(getUserLanguage())
+  });
   UI.registerHelper("players", function() {
     return GamePlayers.find({gameid:this._id}, {sort:{username:1}});
   });
@@ -121,7 +123,7 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("myRole", function() {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-    return gamePlayer ? gamePlayer.myinfo.orig_role : "You are not playing this game";
+    return !gamePlayer ? "You are not playing this game" : gamePlayer.myinfo.orig_role || " ";
   });
   UI.registerHelper("myVote", function() {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -131,6 +133,10 @@ if (Meteor.isClient) {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
     return gamePlayer && gamePlayer.myinfo.orig_role === role;
   });
+  UI.registerHelper("myNightTargetsLen", function(num) {
+    var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    return gamePlayer && gamePlayer.myinfo.night_targets.length == num;
+  });
   UI.registerHelper("thisRoleChanged", function() {
     var gamePlayer = GamePlayers.findOne(this._id);
     return gamePlayer && gamePlayer.myinfo.orig_role !== gamePlayer.myinfo.curr_role;
@@ -138,10 +144,8 @@ if (Meteor.isClient) {
   UI.registerHelper("randomTip", function() {
     if (!Session.get("randomTip")) {
       console.log("randomTip");
-      Meteor.call("randomTip", function(err, data) {
-        if (err) { console.log (err); }
-        Session.set("randomTip", data);
-      });
+      var tipnum = Math.floor((Math.random()*2));
+      Session.set("randomTip", TAPi18n.__("tip_"+tipnum));
     }
     return Session.get("randomTip");
   });
@@ -152,7 +156,7 @@ if (Meteor.isClient) {
     if (this.gameState === "Day") {
       var time = this.daytimer - Math.floor((Session.get("time").getTime() - this.timestamps.day.getTime())/1000);
       if (time < 0) { time = 0; }
-      return "Time left: " + time;
+      return TAPi18n.__("Time left") + ": " + time;
     } else {
       return null;
     }
@@ -164,9 +168,12 @@ if (Meteor.isClient) {
   UI.registerHelper("roleDesc", function() {
     return this.name + "_desc";
   });
+  //UI.registerHelper("t", function(key, options) {
+  //  return TAPi18n.__(key, options);
+  //});
   Meteor.setInterval(function () {
     Session.set('time', new Date());
-  }, 1000); 
+  }, 1000);
   function isPlayingThisGameTest(game) {
     var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:Meteor.userId()});
     return (gamePlayer) ? true : false;
@@ -183,12 +190,20 @@ if (Meteor.isClient) {
     if (gamePlayer.myinfo.orig_role == "Seer") {
       if (gamePlayer.myinfo.night_done) {
         if (night_targets.length === 2) {
-          str = "You are a Seer, and you peeked at 2 of the 3 middle cards." +
-                   " #" + night_targets[0] + "=" + game.myinfo.unused_roles[night_targets[0]].name +
-                   " #" + night_targets[1] + "=" + game.myinfo.unused_roles[night_targets[1]].name;
+          str = TAPi18n.__("seerNightResultsMiddlePeek", {
+            "myrole":TAPi18n.__("Seer"),
+            "p1": night_targets[0],
+            "r1": TAPi18n.__(game.myinfo.unused_roles[night_targets[0]].name),
+            "p2": night_targets[1],
+            "r2": TAPi18n.__(game.myinfo.unused_roles[night_targets[1]].name)
+          });
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str = "You are a Seer, and you peeked at " + targetPlayer.username + " and saw he was a " + targetPlayer.myinfo.orig_role;
+          str = TAPi18n.__("seerNightResultsPlayerPeek", {
+            "myrole":TAPi18n.__("Seer"),
+            "target":targetPlayer.username,
+            "target_role":TAPi18n.__(targetPlayer.myinfo.orig_role)
+          });
         }
       } else {
         str = "";
@@ -196,12 +211,14 @@ if (Meteor.isClient) {
     } else if (gamePlayer.myinfo.orig_role == "Robber") {
       if (gamePlayer.myinfo.night_done) {
         if (night_targets.length === 0) {
-          str = "Did not rob";
+          str = TAPi18n.__("Did not rob");
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str =
-            "You were a Robber but you became a " + gamePlayer.myinfo.night_result +
-            " and " + (targetPlayer ? targetPlayer.username : "ERROR" + targetPlayer) + " became a Robber";
+          str = TAPi18n.__("robberNightResults", {
+            "myrole" :TAPi18n.__("Robber"),
+            "newrole":TAPi18n.__(gamePlayer.myinfo.night_result),
+            "target" :targetPlayer.username
+          });
         }
       } else {
         str = "";
@@ -214,26 +231,30 @@ if (Meteor.isClient) {
         if (orig_werewolves.length === 1) {
           var i = gamePlayer.myinfo.night_targets[0];
           var centerPeek = game.myinfo.unused_roles[i].name;
-          str = "You are the only Werewolf. Center card #" + (i+1) + " is " + centerPeek;
+          str = TAPi18n.__("nr_ww", {
+            "myrole" : TAPi18n.__("Werewolf"),
+            "p1"     : i+1,
+            "r1"     : TAPi18n.__(centerPeek)
+          });
         } else {
-          str = "The Werewolves are:";
-          for (var i=0; i<orig_werewolves.length; i++) {
-            str += " " + orig_werewolves[i].username;
-          }
+          str = TAPi18n.__("nr_ww_plural", {
+            "myrole" : TAPi18n.__("Werewolf"),
+            "players" : orig_werewolves.join(", ")
+          });
         }
       }
     } else if (gamePlayer.myinfo.orig_role == "Insomniac") {
       if (game.gameState === "Creating") {
-        str = "Error: Not night yet";
+        str = TAPi18n.__("Error: Not night yet");
       } else if (game.gameState === "Night") {
-        str = "You are an Insomniac. Soon you will find out if your role changed";
+        str = TAPi18n.__("nr_i_wait");
       } else if (gamePlayer.myinfo.curr_role === gamePlayer.myinfo.orig_role) {
-        str = "You are still an Insomniac.";
+        str = TAPi18n.__("nr_i_nochange");
       } else {
-        str = "You were an Insomniac, but you became a " + gamePlayer.myinfo.curr_role;
+        str = TAPi18n.__("nr_i_change", {"curr_role" : gamePlayer.myinfo.curr_role});
       }
     } else if (gamePlayer.myinfo.orig_role == "Villager") {
-      str = "You are a Villager, so you have no special night abilities";
+      str = TAPi18n.__("nr_v");
     } else {
       str = "";
     }
@@ -243,7 +264,7 @@ if (Meteor.isClient) {
     $("[data-toggle='tooltip']").tooltip();
     $("[data-toggle='popover']").popover();
   };
-  Template.listRolesT.rendered = function() {
+  Template.roleWithPopoverT.rendered = function() {
     $("[data-toggle='tooltip']").tooltip();
     $("[data-toggle='popover']").popover();
   };
@@ -351,7 +372,6 @@ if (Meteor.isClient) {
     "submit form": function(event) {
       event.preventDefault();
       var result = $("input[name='voteplayer']:checked").val();
-      console.log("voted", result);
       Meteor.call("voteSubmit", this, Meteor.userId(), result);
     },
   });
@@ -406,11 +426,6 @@ if (Meteor.isServer) {
       AllRoles.insert({name: "Troublemaker", order: 4});
       AllRoles.insert({name: "Insomniac",    order: 5});
       AllRoles.insert({name: "Villager",     order: 999});
-      var id=0;
-      TipOfTheDay.insert({id:id++, tip:"If you're a Werewolf, better get your lies ready."});
-      TipOfTheDay.insert({id:id++, tip:"If you're a Werewolf, you're not a liar -- anyone who says you're a liar is a liar!"});
-      TipOfTheDay.insert({id:id++, tip:"During the day you can change your vote at anytime."});
-      TipOfTheDay.insert({id:id++, tip:"Day ends when 1) everyone votes or 2) the timer expires and at least one person votes"});
       Meteor.users.insert({createdAt: new Date(), username: "AliceBot",   bot:true});
       Meteor.users.insert({createdAt: new Date(), username: "BobBot",     bot:true});
       Meteor.users.insert({createdAt: new Date(), username: "CharlieBot", bot:true});
@@ -764,11 +779,6 @@ if (Meteor.isServer) {
         GamePlayers.update({gameid:game._id, userid:userid}, {$set: {"myinfo.voted_for" : targetid }});
       }
       checkDayDone(game._id);
-    },
-    randomTip: function() {
-      var count = TipOfTheDay.find().count()
-      var pick = Math.floor((Math.random()*count));  // random number between 0 and count-1
-      return TipOfTheDay.findOne({id:pick}).tip;
     },
     addMessage: function(gameid, msg) {
       Messages.insert({

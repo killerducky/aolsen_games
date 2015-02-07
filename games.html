@@ -59,7 +59,7 @@
           <td class="hidden-xs">--</td>
           <td>
             <a href="/game/{{_id}}">
-            <button class="open-game btn btn-info" data-toggle="tooltip" title="Join Game Room">
+            <button class="open-game btn btn-info" data-toggle="tooltip" title="{{_ 'Enter Game Room'}}">
             <span class="glyphicon glyphicon-plus"></span>
             </button>
             </a>
@@ -67,7 +67,7 @@
         </tr>
       {{/each}}
     </table>
-    <button class="add-game btn btn-info" data-toggle="tooltip" title="Create New Game"><span class="glyphicon glyphicon-plus"></span> New Game</button>
+    <button class="add-game btn btn-info" data-toggle="tooltip" title="{{_ 'Create Game Room'}}"><span class="glyphicon glyphicon-plus"></span> New Game</button>
     {{>userList}}
   {{/if}}
 </template>
@@ -96,8 +96,8 @@
       {{>playerListT}}
       {{>addRolesT}}
       {{>listRolesT}}
-      <tr><td>{{_ "State"}}</td>             <td>{{gameState}} {{timer}}</td></tr>
-      <tr><td>{{_ "Your original role"}}</td><td>{{myRole}}</td></tr>
+      <tr><td>{{_ "State"}}</td>             <td>{{_ gameState}} {{timer}}</td></tr>
+      <tr><td>{{_ "Your original role"}}</td><td>{{_ myRole}}</td></tr>
       <tr><td>{{_ "Night Actions"}}</td>     <td>{{>nightActions}}</td>
       </tr>
       <tr><td>{{_ "Voted For"}}</td>              <td>{{>vote}}</td></tr>
@@ -132,11 +132,11 @@
     <td>{{_ "Actions"}}</td>
     <td>
       {{#if isOwnerThisGame}}
-        <button class="start-game btn btn-info"  data-toggle="tooltip" title="Start Game"><span class="glyphicon glyphicon-play"></span></button>
-        <button class="delete-game btn btn-info" data-toggle="tooltip" title="Delete Game"><span class="glyphicon glyphicon-trash"></span></button>
-        <button class="add-bot btn btn-info"     data-toggle="tooltip" title="Add Robot Player"><span class="glyphicon glyphicon-flash"></span></button>
-        <button class="del-bot btn btn-info"     data-toggle="tooltip" title="Delete Robot Player"><span class="glyphicon glyphicon-remove"></span></button>
-        <button class="tog-example btn btn-info" data-toggle="tooltip" title="Toggle Example Game Mode">
+        <button class="start-game btn btn-info"  data-toggle="tooltip" title="{{_ 'Start Game'}}"><span class="glyphicon glyphicon-play"></span></button>
+        <button class="delete-game btn btn-info" data-toggle="tooltip" title="{{_ 'Delete Game'}}"><span class="glyphicon glyphicon-trash"></span></button>
+        <button class="add-bot btn btn-info"     data-toggle="tooltip" title="{{_ 'Add Robot Player'}}"><span class="glyphicon glyphicon-flash"></span></button>
+        <button class="del-bot btn btn-info"     data-toggle="tooltip" title="{{_ 'Delete Robot Player'}}"><span class="glyphicon glyphicon-remove"></span></button>
+        <button class="tog-example btn btn-info" data-toggle="tooltip" title="{{_ 'Toggle Practice Game Mode'}}">
           {{#if example_game}}
             <span class="glyphicon glyphicon-eye-open"></span>
           {{else}}
@@ -146,11 +146,11 @@
       {{else}}
         {{#if gameStateTest "Creating"}}
           {{#if isPlayingThisGame}}
-            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Leave Game">
+            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="{{_ 'Leave Game'}}">
             <span class="glyphicon glyphicon-minus"></span>
             </button>
           {{else}}
-            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="Join Game">
+            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="{{_ 'Join Game'}}">
             <span class="glyphicon glyphicon-plus"></span>
             </button>
           {{/if}}
@@ -158,7 +158,7 @@
           N/A
         {{/if}}
         {{#if example_game}}
-          <button class="btn btn-info" data-toggle="tooltip" title="Example Game Mode"><span class="glyphicon glyphicon-eye-open"></span></button>
+          <button class="btn btn-info" data-toggle="tooltip" title="{{_ 'Practice Game Mode'}}"><span class="glyphicon glyphicon-eye-open"></span></button>
         {{/if}}
       {{/if}}
     </td>
@@ -200,32 +200,34 @@
         {{/each}}
       {{else}}
         {{#each game_roles}}
-          <a tabindex="0" data-toggle="popover" data-trigger="focus" data-placement="top" data-content="{{_ roleDesc}}">
-          {{_ name}}
-          </a>
+          {{>roleWithPopoverT}}
         {{/each}}
       {{/if}}
     {{else}}
       {{#each game_roles}}
-        <a tabindex="0" data-toggle="popover" data-trigger="focus" data-placement="top" data-content="{{_ roleDesc}}">
-        {{_ name}}
-        </a>
+        {{>roleWithPopoverT}}
       {{/each}}
     {{/if}}
   </td></tr>
 </template>
 
+<template name="roleWithPopoverT">
+  <a tabindex="0" data-toggle="popover" data-trigger="focus" data-placement="top" data-content="{{_ roleDesc}}">
+  {{_ name}}
+  </a>
+</template>
+
+
 
 <template name="nightActions">
   {{#if gameStateTest "Creating"}}
-    na
   {{else}}
     {{#if gameStateTest "Night"}}
       {{#if myNightDone}}
         <div class="user-attention">
         <p>{{myNightResults}}</p>
-        <p>Waiting for other players to finish their Night actions.</p>
-        <p>Tip: {{randomTip}}</p>
+        <p>{{_ "nightWaiting"}}</p>
+        <p>{{_ "Tip:"}} {{randomTip}}</p>
         </div>
       {{else}}
         {{#if myRoleTest "Seer"    }} {{> seerNight  }} {{else}}
@@ -311,12 +313,12 @@
 <template name="seerNight">
   <p>
     <form id="seerform" class="user-attention">
-      Pick One player to Peek, or 2 cards from the middle.
+      {{_ "seerPickText"}}
       <ul>
         {{#each otherPlayers}}
           <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
         {{/each}}
-        <li><input type="radio" name="player" value="middle" checked>2 cards from the middle</li>
+        <li><input type="radio" name="player" value="middle" checked>{{_ "2 cards from the middle"}}</li>
         <li><button type="submit" class="btn btn-primary">Submit</button></li>
       </ul>
     </form>
@@ -327,12 +329,12 @@
 <template name="robberNight">
   <p>
     <form id="robberform" class="user-attention">
-      Pick One player to Rob, or choose "Do not rob".
+      {{_ "robberPickText"}}
       <ul>
         {{#each otherPlayers}}
           <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
         {{/each}}
-        <li><input type="radio" name="player" value="nobody" checked>Do not rob</li>
+        <li><input type="radio" name="player" value="nobody" checked>{{_ Do not rob}}</li>
         <li><button type="submit" class="btn btn-primary">Submit</button></li>
       </ul>
     </form>
@@ -345,7 +347,7 @@
     <form id="dummyform" class="user-attention">
       {{myNightResults}}
       <ul>
-        <li><button type="submit" class="btn btn-primary">Continue</button></li>
+        <li><button type="submit" class="btn btn-primary">{{_ "Continue"}}</button></li>
       </ul>
       Tip: {{randomTip}}
     </form>
@@ -356,19 +358,19 @@
 <template name="vote">
   {{#if gameStateTest "Day"}}
     <form id="voteform" class="user-attention">
-      Vote for a player to kill
+      {{_ "votePrompt"}}
       <ul>
         {{#each otherPlayers}}
           <li><input type="radio" name="voteplayer" value="{{this._id}}">{{username}}</li>
         {{/each}}
-        <li><input type="radio" name="voteplayer" value="nobody" checked>Continue daytime</li>
+        <li><input type="radio" name="voteplayer" value="nobody" checked>{{_ "Continue daytime"}}</li>
         <li><button type="submit" class="btn btn-primary">Submit</button></li>
       </ul>
       {{#if myVote}}
-        <p>You voted for {{myVote}}.</p>
-        <p>Daytime will continue until all players have voted, or the timer expires.</p>
+        <p>{{_ "votePlayer" myVote=myVote}}</p>
+        <p>{{_ "voteDesc"}}</p>
       {{else}}
-        You voted to continue daytime.
+        {{_ "voteContinue"}}
       {{/if}}
     </form>
   {{else}}
@@ -384,7 +386,7 @@
       {{/each}}
     </div>
     <form>
-      <input type="text" name="message" placeholder="Chat here!" class="msginput col-xs-12">
+      <input type="text" name="message" placeholder={{_ "Chat here!"}} class="msginput col-xs-12">
     </form>
   </div>
 </template>

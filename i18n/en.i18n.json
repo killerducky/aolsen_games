@@ -2,19 +2,6 @@
   "One Night Werewolf" : "One Night Werewolf",
   "Intro"              : "In One Night Werewolf, each player takes on the role of a Villager, a Werewolf, or a special character. It's your job to figure out who the Werewolves are and to kill at least one of them in order to win... unless you've become a Werewolf yourself!",
 
-  "Werewolf"     : "Werewolf"     ,
-  "Seer"         : "Seer"         ,
-  "Robber"       : "Robber"       ,
-  "Troublemaker" : "Troublemaker" ,
-  "Insomniac"    : "Insomniac"    ,
-  "Villager"     : "Villager"     ,
-
-  "Werewolf_desc"     : "At night all Werewolves see who the other Werewolves are. If there is only one Werewolf, he peeks at one unused role.",
-  "Seer_desc"         : "At night the Seer can see one player's role, or two unused roles.",
-  "Robber_desc"       : "At night the Robber can swap his role with another player, and view his new role.",
-  "Troublemaker_desc" : "At night the Troublemaker can swap the roles of two other players without looking." ,
-  "Insomniac_desc"    : "At night the Insomniac wakes up and looks at his own role (to see if it has changed).",
-  "Villager_desc"     : "Villagers have no special night ability.",
 
   // Nav
   "Home"  : "Home",
@@ -40,5 +27,61 @@
   "Role"          : "Role"           ,
   "Night Actions" : "Night Actions"  ,
   "Voted For"     : "Voted For"      ,
-  "#V"            : "#V"
+  "#V"            : "#V",
+
+  // Role strings
+  "Werewolf"       : "Werewolf"     ,
+  "Werewolf_desc"  : "At night all Werewolves see who the other Werewolves are. If there is only one Werewolf, he peeks at one unused role.",
+  "nr_ww"          : "You are the only __myrole__. Center card #__p1__ is __r1__",
+  "nr_ww_plural"   : "The __myrole__s are: __players__",
+
+  "Seer"           : "Seer"         ,
+  "Seer_desc"      : "At night the Seer can see one player's role, or two unused roles.",
+  "seerPickText"   : "Pick One player to Peek, or 2 cards from the middle.",
+  "seerNightResultsMiddlePeek" : "You are a __myrole__, and you peeked at 2 of the 3 middle cards. #__p1__=__r1__ #__p2__=__r2__",
+  "seerNightResultsPlayerPeek" : "You are a __myrole__, and you peeked at __target__ and saw he was a __target_role__",
+
+  "Robber"         : "Robber"       ,
+  "Robber_desc"    : "At night the Robber can swap his role with another player, and view his new role.",
+  "robberPickText" : "Pick One player to Rob",
+  "Did not rob"    : "Did not rob",
+  "robberNightResults" : "You were a __myrole__, but you became a __newrole__ and __target__ became a __myrole__",
+
+  "Troublemaker"      : "Troublemaker" ,
+  "Troublemaker_desc" : "At night the Troublemaker can swap the roles of two other players without looking." ,
+
+  "Insomniac"         : "Insomniac"    ,
+  "Insomniac_desc"    : "At night the Insomniac wakes up and looks at his own role (to see if it has changed).",
+
+  "nr_i_wait"     : "You are an Insomniac. Soon you will find out if your role changed",
+  "nr_i_nochange" : "You are still an Insomniac.",
+  "nr_i_change"   : "You were an Insomniac, but you became a __curr_role__",
+
+  "Villager"       : "Villager"     ,
+  "Villager_desc"  : "Villagers have no special night ability.",
+  "nr_v"           : "You are a Villager, so you have no special night abilities",
+
+  // Waiting
+  "nightWaiting" : "Waiting for other players to finish their Night actions.",
+
+  // Vote
+  "votePrompt"   : "Vote for a player to kill",
+  "voteDesc"     : "Daytime will continue until all players have voted, or the timer expires.",
+  "votePlayer"   : "You voted for __myVote__",
+  "voteContinue" : "You voted to continue daytime.",
+
+  // General
+  "Continue"          : "Continue",
+  "Continue daytime"  : "Continue daytime",
+  "Chat here!"        : "Chat here!",
+  "Time left"         : "Time left",
+
+  // Tips
+
+  // Tips
+  "Tip:"   : "Tip:",
+  "tip_0"  : "If you're a Werewolf, better get your lies ready.",
+  //"tip_1"  : "If you're a Werewolf, you're not a liar -- anyone who says you're a liar is a liar!"
+  "tip_1"  : "During the day you can change your vote at anytime."
+  //"tip_3"  : "Day ends when 1) everyone votes or 2) the timer expires and at least one person votes"
 }
