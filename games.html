@@ -39,22 +39,14 @@
     <table class="table table-bordered">
       <caption>{{_ "Current games"}}</caption>
       <tr>
+        <th width="10%"                  ></th> <!-- action buttons -->
         <th width="10%"                  >{{_ "State"}}</th>
-        <th width="30%"                  >{{_ "Roles"}}</th>
+        <th width="10%"                  >{{_ "Owner"}}</th>
         <th width="10%" class="hidden-xs">{{_ "Day Timer"}}</th>
         <th width="10%" class="hidden-xs">{{_ "Num Players"}}</th>
-        <th width="20%"                  ></th> <!-- action buttons -->
       </tr>
       {{#each findAllGames}}
         <tr>
-          <td>{{_ gameState}}</td>
-          <td>
-          {{#each game_roles}}
-            {{shortRoleName}}
-          {{/each}}
-          </td>
-          <td class="hidden-xs">{{daytimer}}</td>
-          <td class="hidden-xs">--</td>
           <td>
             <a href="/game/{{_id}}">
             <button class="open-game btn btn-info" data-toggle="tooltip" title="{{_ 'Enter Game Room'}}">
@@ -62,6 +54,10 @@
             </button>
             </a>
           </td>
+          <td>{{_ gameState}}</td>
+          <td>{{ownername}}</td>
+          <td class="hidden-xs">{{daytimer}}</td>
+          <td class="hidden-xs">--</td>
         </tr>
       {{/each}}
     </table>
@@ -90,11 +86,12 @@
   {{/if}}
   {{#if gameState}}
     <table id="showGame" class="table table-bordered">
-      {{>gameStateActions}}
+      <tr>
+        <td>{{_ "State"}}</td>
+        <td>{{_ gameState}} {{timer}} {{>gameStateActions}}</td></tr>
       {{>playerListT}}
       {{>addRolesT}}
       {{>listRolesT}}
-      <tr><td>{{_ "State"}}</td>             <td>{{_ gameState}} {{timer}}</td></tr>
       <tr><td>{{_ "Your original role"}}</td><td>{{_ myRole}}</td></tr>
       <tr><td>{{_ "Night Actions"}}</td>     <td>{{>nightActions}}</td>
       </tr>
@@ -126,41 +123,33 @@
 </template>
 
 <template name="gameStateActions">
-  <tr>
-    <td>{{_ "Actions"}}</td>
-    <td>
-      {{#if isOwnerThisGame}}
-        <button class="start-game btn btn-info"  data-toggle="tooltip" title="{{_ 'Start Game'}}"><span class="glyphicon glyphicon-play"></span></button>
-        <button class="delete-game btn btn-info" data-toggle="tooltip" title="{{_ 'Delete Game'}}"><span class="glyphicon glyphicon-trash"></span></button>
-        <button class="add-bot btn btn-info"     data-toggle="tooltip" title="{{_ 'Add Robot Player'}}"><span class="glyphicon glyphicon-flash"></span></button>
-        <button class="del-bot btn btn-info"     data-toggle="tooltip" title="{{_ 'Delete Robot Player'}}"><span class="glyphicon glyphicon-remove"></span></button>
-        <button class="tog-example btn btn-info" data-toggle="tooltip" title="{{_ 'Toggle Practice Game Mode'}}">
-          {{#if example_game}}
-            <span class="glyphicon glyphicon-eye-open"></span>
-          {{else}}
-            <span class="glyphicon glyphicon-eye-close"></span>
-          {{/if}}
-        </button>
+  {{#if isOwnerThisGame}}
+    <button class="start-game btn btn-info"  data-toggle="tooltip" title="{{_ 'Start Game'}}"><span class="glyphicon glyphicon-play"></span></button>
+    <button class="delete-game btn btn-info" data-toggle="tooltip" title="{{_ 'Delete Game'}}"><span class="glyphicon glyphicon-trash"></span></button>
+    <button class="add-bot btn btn-info"     data-toggle="tooltip" title="{{_ 'Add Robot Player'}}"><span class="glyphicon glyphicon-flash"></span></button>
+    <button class="del-bot btn btn-info"     data-toggle="tooltip" title="{{_ 'Delete Robot Player'}}"><span class="glyphicon glyphicon-remove"></span></button>
+    <button class="tog-example btn btn-info" data-toggle="tooltip" title="{{_ 'Toggle Practice Game Mode'}}">
+      {{#if example_game}}
+        <span class="glyphicon glyphicon-eye-open"></span>
       {{else}}
-        {{#if gameStateTest "Creating"}}
-          {{#if isPlayingThisGame}}
-            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="{{_ 'Leave Game'}}">
-            <span class="glyphicon glyphicon-minus"></span>
-            </button>
-          {{else}}
-            <button class="toggle-join btn btn-info" data-toggle="tooltip" title="{{_ 'Join Game'}}">
-            <span class="glyphicon glyphicon-plus"></span>
-            </button>
-          {{/if}}
-        {{else}}
-          N/A
-        {{/if}}
-        {{#if example_game}}
-          <button class="btn btn-info" data-toggle="tooltip" title="{{_ 'Practice Game Mode'}}"><span class="glyphicon glyphicon-eye-open"></span></button>
-        {{/if}}
+        <span class="glyphicon glyphicon-eye-close"></span>
       {{/if}}
-    </td>
-  </tr>
+    </button>
+  {{else}}
+    {{#if gameStateTest "Creating"}}
+      <button class="toggle-join btn btn-info" data-toggle="tooltip" title="{{_ 'Join/Leave Game'}}">
+      {{#if isPlayingThisGame}}
+        <span class="glyphicon glyphicon-minus"></span>
+      {{else}}
+        <span class="glyphicon glyphicon-plus"></span>
+      {{/if}}
+      </button>
+    {{else}}
+    {{/if}}
+    {{#if example_game}}
+      <button class="btn btn-info" data-toggle="tooltip" title="{{_ 'Practice Game Mode'}}"><span class="glyphicon glyphicon-eye-open"></span></button>
+    {{/if}}
+  {{/if}}
 </template>
 
 <template name="playerListT">

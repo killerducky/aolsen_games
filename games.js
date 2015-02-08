@@ -511,9 +511,7 @@ if (Meteor.isServer) {
     });
     if (nightDone) {
       GamePlayers.find({gameid:gameid, "myinfo.orig_role":"Troublemaker"}).forEach(function (gamePlayer) {
-        console.log("nd trouble", gamePlayer.myinfo.night_targets.length);
         if (gamePlayer.myinfo.night_targets.length == 2) {
-          console.log("nd trouble swap");
           var gp1 = GamePlayers.findOne(gamePlayer.myinfo.night_targets[0]);
           var gp2 = GamePlayers.findOne(gamePlayer.myinfo.night_targets[1]);
           GamePlayers.update(gp1, {$set: {"myinfo.curr_role" : gp2.myinfo.curr_role}});
