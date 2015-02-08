@@ -510,6 +510,16 @@ if (Meteor.isServer) {
       }
     });
     if (nightDone) {
+      GamePlayers.find({gameid:gameid, "myinfo.orig_role":"Troublemaker"}).forEach(function (gamePlayer) {
+        console.log("nd trouble", gamePlayer.myinfo.night_targets.length);
+        if (gamePlayer.myinfo.night_targets.length == 2) {
+          console.log("nd trouble swap");
+          var gp1 = GamePlayers.findOne(gamePlayer.myinfo.night_targets[0]);
+          var gp2 = GamePlayers.findOne(gamePlayer.myinfo.night_targets[1]);
+          GamePlayers.update(gp1, {$set: {"myinfo.curr_role" : gp2.myinfo.curr_role}});
+          GamePlayers.update(gp2, {$set: {"myinfo.curr_role" : gp1.myinfo.curr_role}});
+        }
+      });
       Games.update(gameid, {$set: {"gameState": "Day", "timestamps.day" : new Date()}});
       botActions(game._id);
     }
@@ -847,10 +857,6 @@ if (Meteor.isServer) {
         if (gamePlayer.myinfo.night_targets.length === 0) {
           GamePlayers.update(gamePlayer._id, {$set: {"myinfo.night_targets": [targetid]}});
         } else if (gamePlayer.myinfo.night_targets.length === 1) {
-          var gp1 = GamePlayers.findOne(gamePlayer.myinfo.night_targets[0]);
-          var gp2 = GamePlayers.findOne(targetid);
-          GamePlayers.update(gp1, {$set: {"myinfo.curr_role" : gp2.myinfo.curr_role}});
-          GamePlayers.update(gp2, {$set: {"myinfo.curr_role" : gp1.myinfo.curr_role}});
           GamePlayers.update(gamePlayer._id, {$push: {"myinfo.night_targets": targetid}, $set: {"myinfo.night_done":true}});
         } else {
           throw new Meteor.Error("Error: Inconsistent state");

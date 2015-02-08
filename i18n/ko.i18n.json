@@ -65,7 +65,7 @@
   "Robber"         : "도둑"       ,
   "Robber_desc"    : "밤엔 자신의 인물과 다른 플레이어 1명의 인물을 교환하고, 바꿔온 인물을 봅니다.",
   "robberPickText" : "도둑질 선수 선택",
-  "Do not rob"     : "도둑질 한지 않기",
+  "Do not rob"     : "도둑질 하지 않기",
   "Did not rob"    : "도둑질 하지 않음",
   "robberNightResults" : "__target__에서 __newrole__ 바꿨습니다.",
 
