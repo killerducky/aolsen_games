@@ -274,7 +274,7 @@ if (Meteor.isClient) {
           }};
         } else {
           var wwstr = "";
-          for (var i=0; i < orig_werewolves.length; i++) {
+          for (var i=0; i < orig_werewolves.length-1; i++) {
             wwstr += orig_werewolves[i].username + ", ";
           }
           wwstr += orig_werewolves[orig_werewolves.length-1].username;
@@ -603,18 +603,18 @@ if (Meteor.isServer) {
           var str;
           if (gamePlayer.myinfo.orig_role === "Werewolf") {
             if (Math.random() < 0.5) {
-              str = {"TAPi18n":"claimT", "opts":{"myRole":"Villager", "note":{"TAPi18n":"nr_v"}}};
+              str = {"TAPi18n":"claimT", "opts":{"myRole":{"TAPi18n":"Villager"}, "note":{"TAPi18n":"nr_v"}}};
             } else {
-              str = {"TAPi18n":"claimT", "opts":{"myRole":"Robber", "note":{"TAPi18n":"Did not rob"}}};
+              str = {"TAPi18n":"claimT", "opts":{"myRole":{"TAPi18n":"Robber"}, "note":{"TAPi18n":"Did not rob"}}};
             }
           } else if (gamePlayer.myinfo.orig_role === "Robber" && gamePlayer.myinfo.night_result === "Werewolf") {
             if (Math.random() < 0.5) {
-              str = {"TAPi18n":"claimT", "opts":{"myRole":"Villager", "note":{"TAPi18n":"nr_v"}}};
+              str = {"TAPi18n":"claimT", "opts":{"myRole":{"TAPi18n":"Villager"}, "note":{"TAPi18n":"nr_v"}}};
             } else {
-              str = {"TAPi18n":"claimT", "opts":{"myRole":"Robber", "note":{"TAPi18n":"Did not rob"}}};
+              str = {"TAPi18n":"claimT", "opts":{"myRole":{"TAPi18n":"Robber"}, "note":{"TAPi18n":"Did not rob"}}};
             }
           } else {
-            str = {"TAPi18n":"claimT", "opts":{"myRole":gamePlayer.myinfo.orig_role, "note":nightResult(game._id, gamePlayer._id)}};
+            str = {"TAPi18n":"claimT", "opts":{"myRole":{"TAPi18n":gamePlayer.myinfo.orig_role}, "note":nightResult(game._id, gamePlayer._id)}};
           }
           Messages.insert({
             "gameid" : gameid,
