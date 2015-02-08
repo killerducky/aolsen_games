@@ -34,11 +34,11 @@
   "Join Game"                  : "가입",
   "Leave Game"                 : "탈퇴",
   "Practice Game Mode"         : "연습한 게임 모드",
+  "Players"                    : "선수 목록",
+  "Game roles"                 : "인물 목록",
+  "Add Role"                   : "인물 추가",
+  "Your original role"         : "당신의 원래 인물" ,
   "newGameStartChat"           : "새로운 게임 시작해습니다. 지금 밤입니다.",
-
-  "Players"       : "선수 목록"  ,
-  "Game roles"    : "인물 목록"  ,
-  "Your original role" : "당신의 원래 인물" ,
 
   // Game Results
   "Name"          : "이름"     ,
@@ -65,12 +65,17 @@
   "Robber"         : "도둑"       ,
   "Robber_desc"    : "밤엔 자신의 인물과 다른 플레이어 1명의 인물을 교환하고, 바꿔온 인물을 봅니다.",
   "robberPickText" : "도둑질 선수 선택",
-  "Do not rob"     : "도둑질 한지않기",
-  "Did not rob"    : "도둑질 하지않음",
+  "Do not rob"     : "도둑질 한지 않기",
+  "Did not rob"    : "도둑질 하지 않음",
   "robberNightResults" : "__target__에서 __newrole__ 바꿨습니다.",
 
   "Troublemaker"      : "문제아"     ,
   "Troublemaker_desc" : "밤엔 다른 플레이어 2명의 인물을 보지 않고 바꿉니다.",
+  "troublePickText1"  : "첫번쩨 바뀐 선수 선택",
+  "troublePickText2"  : "__swap1__랑 바뀐 선수 선택",
+  "Do not swap"       : "바꾸지 않기",
+  "Did not swap"      : "바꾸지 않음",
+  "troubleNightResults" : "당신은 __p1__랑 __p2__의 인물을 바꿨습니다.",
 
   "Insomniac"       : "불면증환자" ,
   "Insomniac_desc"  : "밤엔 잠에서 깨고 자신의 인물을 봅니다 (바꾸지 확인 위해서).",
@@ -83,7 +88,7 @@
   "nr_v"            : "당신은 동네사람여서 특별 능력 없습니다.",
 
   // Generic Claim Template
-  "claimT"         : "저는 __myRole__입니다. 밤엔『__note__』라고 받았습니다.",
+  "claimT"         : "저는 __myRole__입니다. 밤엔 '__note__'라고 받았습니다.",
 
   // Waiting
   "nightWaiting" : "다른 선수들의 밤 행동 끝내기를 기달리줘습니다.",
@@ -95,13 +100,15 @@
   "voteContinue" : "당신은 낮 계속 투표를 부쳤습니다.",
 
   // General
+  "Not done"          : "아직 결정 않음",
+  "Submit"            : "입력",
   "Continue"          : "계속",
   "Continue daytime"  : "낮 계속하기",
   "Chat here!"        : "대화하기",
   "Time left"         : "남은 시간",
 
   // Tips
-  "Tip:"   : "귀띔",
+  "Tip"    : "귀띔",
   "tip_0"  : "당신 늑대인간있으면 거짓말 준비해야 해습니다.",
   //"tip_1"  : "If you're a Werewolf, you're not a liar -- anyone who says you're a liar is a liar!"
   "tip_1"  : "낮 중에 투표를 바뀔 수도 되습니다."

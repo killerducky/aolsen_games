@@ -16,7 +16,6 @@
     <li><a>{{> loginButtons}}</a></li>
     <li><a href="/" padding="0">{{_ "Home"}}</a></li>
     <li><a href="/about" padding-top="0" padding-bottom="0">{{_ "About"}}</a></li>
-    {{#if currentUser}}
     <li>
       <div class="btn-group">
         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -28,7 +27,6 @@
         </ul>
       </div>
     </li>
-    {{/if}}
   </ul>
 </template>
 
@@ -179,7 +177,7 @@
 <template name="addRolesT">
   {{#if isOwnerThisGame}}
   {{#if gameStateTest "Creating"}}
-    <tr><td>Add Role</td>
+    <tr><td>{{_ "Add Role"}}</td>
     <td>
     {{#each all_roles}}
       <button class="add-role btn btn-default" data-game="{{../_id}}">{{_ name}}</button>
@@ -227,12 +225,14 @@
         <div class="user-attention">
         <p>{{myNightResults}}</p>
         <p>{{_ "nightWaiting"}}</p>
-        <p>{{_ "Tip:"}} {{randomTip}}</p>
+        <p>{{_ "Tip"}}: {{randomTip}}</p>
         </div>
       {{else}}
-        {{#if myRoleTest "Seer"    }} {{> seerNight  }} {{else}}
-        {{#if myRoleTest "Robber"  }} {{> robberNight}} {{else}}
-                                      {{> dummyNight}}
+        {{#if myRoleTest "Seer"        }} {{> seerNight   }} {{else}}
+        {{#if myRoleTest "Robber"      }} {{> robberNight }} {{else}}
+        {{#if myRoleTest "Troublemaker"}} {{> troubleNight}} {{else}}
+                                          {{> dummyNight}}
+        {{/if}}
         {{/if}}
         {{/if}}
       {{/if}}
@@ -319,7 +319,7 @@
           <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
         {{/each}}
         <li><input type="radio" name="player" value="middle" checked>{{_ "2 cards from the middle"}}</li>
-        <li><button type="submit" class="btn btn-primary">Submit</button></li>
+        <li><button type="submit" class="btn btn-primary">{{_ "Submit"}}</button></li>
       </ul>
     </form>
     <br>
@@ -335,7 +335,23 @@
           <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
         {{/each}}
         <li><input type="radio" name="player" value="nobody" checked>{{_ Do not rob}}</li>
-        <li><button type="submit" class="btn btn-primary">Submit</button></li>
+        <li><button type="submit" class="btn btn-primary">{{_ "Submit"}}</button></li>
+      </ul>
+    </form>
+    <br>
+  </p>
+</template>
+
+<template name="troubleNight">
+  <p>
+    <form id="troubleform" class="user-attention">
+      {{troublePickText}}
+      <ul>
+        {{#each otherPlayers}}
+          <li><input type="radio" name="player" value="{{this._id}}">{{username}}</li>
+        {{/each}}
+        <li><input type="radio" name="player" value="nobody" checked>{{_ "Do not swap"}}</li>
+        <li><button type="submit" class="btn btn-primary">{{_ "Submit"}}</button></li>
       </ul>
     </form>
     <br>
@@ -349,7 +365,7 @@
       <ul>
         <li><button type="submit" class="btn btn-primary">{{_ "Continue"}}</button></li>
       </ul>
-      Tip: {{randomTip}}
+      {{_ "Tip"}}: {{randomTip}}
     </form>
     <br>
   </p>
@@ -364,7 +380,7 @@
           <li><input type="radio" name="voteplayer" value="{{this._id}}">{{username}}</li>
         {{/each}}
         <li><input type="radio" name="voteplayer" value="nobody" checked>{{_ "Continue daytime"}}</li>
-        <li><button type="submit" class="btn btn-primary">Submit</button></li>
+        <li><button type="submit" class="btn btn-primary">{{_ "Submit"}}</button></li>
       </ul>
       {{#if myVote}}
         <p>{{_ "votePlayer" myVote=myVote}}</p>

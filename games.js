@@ -74,7 +74,7 @@ function preTAP2str(preTAP) {
 }
 
 getUserLanguage = function () {
-  return (Meteor.user() && Meteor.user().profile.language) || "en";
+  return (Meteor.user() && Meteor.user().profile.language) || Session.get("language") || "en";
 }
 
 if (Meteor.isClient) {
@@ -121,14 +121,23 @@ if (Meteor.isClient) {
     return gamePlayer && gamePlayer.myinfo.night_done;
   });
   UI.registerHelper("gameStateTest", function(value) {
-    // TODO: Is there a better way to do this?
     return Games.findOne(this._id).gameState === value;
+  });
+  UI.registerHelper("troublePickText", function() {
+    var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
+    if (gamePlayer.myinfo.night_targets.length === 0) {
+      return TAPi18n.__("troublePickText1");
+    } else if (gamePlayer.myinfo.night_targets.length === 1) {
+      return TAPi18n.__("troublePickText2", {"swap1": GamePlayers.findOne(gamePlayer.myinfo.night_targets[0]).username});
+    } else {
+      throw new Meteor.Error("Error: inconsistent state");
+    }
   });
   UI.registerHelper("isPlayingThisGame", function() {
     return isPlayingThisGameTest(this);
   });
   UI.registerHelper("onlineUsers", function() {
-    return Meteor.users.find({});
+    return Meteor.users.find({"bot":{$ne:true}});
   });
   UI.registerHelper("findAllGames", function() {
     return Games.find({});
@@ -225,55 +234,68 @@ if (Meteor.isClient) {
     } else if (gamePlayer.myinfo.orig_role == "Robber") {
       if (gamePlayer.myinfo.night_done) {
         if (night_targets.length === 0) {
-          preTAP = TAPi18n.__("Did not rob");
+          preTAP = {"TAPi18n":"Did not rob"};
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          preTAP = TAPi18n.__("robberNightResults", {
-            "myrole" :TAPi18n.__("Robber"),
-            "newrole":TAPi18n.__(gamePlayer.myinfo.night_result),
+          preTAP = {"TAPi18n":"robberNightResults", "opts":{
+            "myrole" :{"TAPi18n":"Robber"},
+            "newrole":{"TAPi18n":gamePlayer.myinfo.night_result},
             "target" :targetPlayer.username
-          });
+          }};
         }
       } else {
         preTAP = "";
       }
+    } else if (gamePlayer.myinfo.orig_role == "Troublemaker") {
+      if (gamePlayer.myinfo.night_done) {
+        if (night_targets.length === 0) {
+          preTAP = {"TAPi18n":"Did not swap"};
+        } else {
+          preTAP = {"TAPi18n":"troubleNightResults", "opts":{
+            "p1" : GamePlayers.findOne({_id:night_targets[0]}).username,
+            "p2" : GamePlayers.findOne({_id:night_targets[1]}).username
+          }};
+        }
+      } else {
+        preTAP = {"TAPi18n":"Not done"};
+      }
     } else if (gamePlayer.myinfo.orig_role == "Werewolf") {
       if (game.gameState === "Creating") {
-        preTAP = "Error: Not night yet";
+        preTAP = {"TAPi18n":"Error: Not night yet"};
       } else {
         var orig_werewolves = game.myinfo.orig_werewolves;
         if (orig_werewolves.length === 1) {
           var i = gamePlayer.myinfo.night_targets[0];
           var centerPeek = game.myinfo.unused_roles[i].name;
-          preTAP = TAPi18n.__("nr_ww", {
-            "myrole" : TAPi18n.__("Werewolf"),
+          preTAP = {"TAPi18n":"nr_ww", "opts":{
+            "myrole" : {"TAPi18n":"Werewolf"},
             "p1"     : i+1,
-            "r1"     : TAPi18n.__(centerPeek)
-          });
+            "r1"     : {"TAPi18n":centerPeek}
+          }};
         } else {
           var wwstr = "";
           for (var i=0; i < orig_werewolves.length; i++) {
             wwstr += orig_werewolves[i].username + ", ";
           }
           wwstr += orig_werewolves[orig_werewolves.length-1].username;
-          preTAP = TAPi18n.__("nr_ww_plural", {
-            "myrole" : TAPi18n.__("Werewolf"),
+          preTAP = {"TAPi18n":"nr_ww_plural", "opts":{
+            "myrole" : {"TAPi18n":"Werewolf"},
             "players" : wwstr
-          });
+          }};
         }
       }
     } else if (gamePlayer.myinfo.orig_role == "Insomniac") {
       if (game.gameState === "Creating") {
-        preTAP = TAPi18n.__("Error: Not night yet");
+        preTAP = {"TAPi18n":"Error: Not night yet"};
       } else if (game.gameState === "Night") {
-        preTAP = TAPi18n.__("nr_i_wait");
+        preTAP = {"TAPi18n":"nr_i_wait"};
       } else if (gamePlayer.myinfo.curr_role === gamePlayer.myinfo.orig_role) {
-        preTAP = TAPi18n.__("nr_i_nochange");
+        preTAP = {"TAPi18n":"nr_i_nochange"};
       } else {
-        preTAP = TAPi18n.__("nr_i_change", {"curr_role" : gamePlayer.myinfo.curr_role});
+        preTAP = {"TAPi18n":"nr_i_change", "opts":{"curr_role" : gamePlayer.myinfo.curr_role}};
       }
     } else if (gamePlayer.myinfo.orig_role == "Villager") {
-      preTAP = TAPi18n.__("nr_v");
+      preTAP = {"TAPi18n":"nr_v"};
     } else {
       preTAP = "";
     }
@@ -294,10 +316,18 @@ if (Meteor.isClient) {
   });
   Template.appBody.events({
     "click #English": function() {
-      Meteor.users.update({_id:Meteor.userId()}, {$set:{"profile.language": "en"}});
+      if (Meteor.user()) {
+        Meteor.users.update({_id:Meteor.userId()}, {$set:{"profile.language": "en"}});
+      } else {
+        Session.set("language", "en");
+      }
     },
     "click #Korean": function() {
-      Meteor.users.update({_id:Meteor.userId()}, {$set:{"profile.language": "ko"}});
+      if (Meteor.user()) {
+        Meteor.users.update({_id:Meteor.userId()}, {$set:{"profile.language": "ko"}});
+      } else {
+        Session.set("language", "ko");
+      }
     },
   });
   Template.appBody.rendered = function () {
@@ -381,6 +411,13 @@ if (Meteor.isClient) {
       Meteor.call("robberNightSubmit", this, Meteor.userId(), result);
     },
   });
+  Template.troubleNight.events({
+    "submit form": function(event) {
+      event.preventDefault();
+      var result = $("input[name='player']:checked").val();
+      Meteor.call("troubleNightSubmit", this, Meteor.userId(), result);
+    },
+  });
   Template.dummyNight.events({
     "submit form": function(event) {
       event.preventDefault();
@@ -431,7 +468,7 @@ if (Meteor.isServer) {
   });
   Meteor.publish("public_users", function() {
     //return Meteor.users.find({"status.online":true}, {fields:{username:1}});
-    return Meteor.users.find({$or: [{"status.online":true}, {"bot":true}]}, {fields:{username:1, profile:1}});
+    return Meteor.users.find({$or: [{"status.online":true}, {"bot":true}]}, {fields:{username:1, profile:1, bot:1}});
   });
   Meteor.publish("messages", function() {
     return Messages.find({});
@@ -539,15 +576,23 @@ if (Meteor.isServer) {
             if (Math.random()<0.25) {
               Meteor.call("robberNightSubmit", game, gamePlayer.userid, "nobody");
             } else {
-              target = pickRandomOtherGamePlayer(game, gamePlayer);
+              target = pickRandomOtherGamePlayer(game, gamePlayer, 1);
               Meteor.call("robberNightSubmit", game, gamePlayer.userid, target._id);
             }
           } else if (gamePlayer.myinfo.orig_role === "Seer") {
             if (Math.random()<0.5) {
               Meteor.call("seerNightSubmit", game, gamePlayer.userid, "middle");
             } else {
-              target = pickRandomOtherGamePlayer(game, gamePlayer);
+              target = pickRandomOtherGamePlayer(game, gamePlayer, 1);
               Meteor.call("seerNightSubmit", game, gamePlayer.userid, target._id);
+            }
+          } else if (gamePlayer.myinfo.orig_role === "Troublemaker") {
+            if (Math.random()<0.25) {
+              Meteor.call("troubleNightSubmit", game, gamePlayer.userid, "nobody");
+            } else {
+              target = pickRandomOtherGamePlayer(game, gamePlayer, 2);
+              Meteor.call("troubleNightSubmit", game, gamePlayer.userid, target[0]._id);
+              Meteor.call("troubleNightSubmit", game, gamePlayer.userid, target[1]._id);
             }
           } else {
             Meteor.call("dummyNightSubmit", game, gamePlayer.userid);
@@ -564,12 +609,12 @@ if (Meteor.isServer) {
             }
           } else if (gamePlayer.myinfo.orig_role === "Robber" && gamePlayer.myinfo.night_result === "Werewolf") {
             if (Math.random() < 0.5) {
-              str = "I'm a Villager. My night note: You are a Villager, so you have no special night abilities";
+              str = {"TAPi18n":"claimT", "opts":{"myRole":"Villager", "note":{"TAPi18n":"nr_v"}}};
             } else {
-              str = "I'm a Robber. My night note: Did not rob"
+              str = {"TAPi18n":"claimT", "opts":{"myRole":"Robber", "note":{"TAPi18n":"Did not rob"}}};
             }
           } else {
-            str = "I'm a " + gamePlayer.myinfo.orig_role + ". My night note: " + preTAP2str(nightResult(game._id, gamePlayer._id));
+            str = {"TAPi18n":"claimT", "opts":{"myRole":gamePlayer.myinfo.orig_role, "note":nightResult(game._id, gamePlayer._id)}};
           }
           Messages.insert({
             "gameid" : gameid,
@@ -578,18 +623,23 @@ if (Meteor.isServer) {
             "creation_date" : new Date(),
             "content"  : str
           });
-          target = pickRandomOtherGamePlayer(game, gamePlayer);
+          target = pickRandomOtherGamePlayer(game, gamePlayer, 1);
           Meteor.call("voteSubmit", game, gamePlayer.userid, target._id);
         }
       }
     });
   }
 
-  function pickRandomOtherGamePlayer(game, gamePlayer) {
+  function pickRandomOtherGamePlayer(game, gamePlayer, num) {
     var others = GamePlayers.find({gameid:game._id, userid:{$ne:gamePlayer.userid}}).fetch();
     var count = others.length;
-    var pick = Math.floor((Math.random()*count));  // random number between 0 and count-1
-    return others[pick];
+    if (num===1) {
+      var pick = Math.floor((Math.random()*count));  // random number between 0 and count-1
+      return others[pick];
+    } else {
+      shuffleArray(others);
+      return others.slice(0,num);
+    }
   }
 
   Meteor.methods({
@@ -780,6 +830,31 @@ if (Meteor.isServer) {
           "myinfo.night_result" : targetRole,
           "myinfo.night_done"   : true}});
         GamePlayers.update(targetid, {$set: {"myinfo.curr_role" : robberRole}});
+      }
+      checkNightDone(game._id);
+    },
+    troubleNightSubmit: function(game, userid, targetid) {
+      var gamePlayer = GamePlayers.findOne({gameid:game._id, userid:userid});
+      if (gamePlayer.myinfo.night_done) {
+        throw new Meteor.Error("Error: tns Cannot do more than once");
+        return;
+      }
+      if (targetid === "nobody") {
+        GamePlayers.update(gamePlayer._id, {$set: {
+          "myinfo.night_targets": [],
+          "myinfo.night_done"   : true}});
+      } else {
+        if (gamePlayer.myinfo.night_targets.length === 0) {
+          GamePlayers.update(gamePlayer._id, {$set: {"myinfo.night_targets": [targetid]}});
+        } else if (gamePlayer.myinfo.night_targets.length === 1) {
+          var gp1 = GamePlayers.findOne(gamePlayer.myinfo.night_targets[0]);
+          var gp2 = GamePlayers.findOne(targetid);
+          GamePlayers.update(gp1, {$set: {"myinfo.curr_role" : gp2.myinfo.curr_role}});
+          GamePlayers.update(gp2, {$set: {"myinfo.curr_role" : gp1.myinfo.curr_role}});
+          GamePlayers.update(gamePlayer._id, {$push: {"myinfo.night_targets": targetid}, $set: {"myinfo.night_done":true}});
+        } else {
+          throw new Meteor.Error("Error: Inconsistent state");
+        }
       }
       checkNightDone(game._id);
     },

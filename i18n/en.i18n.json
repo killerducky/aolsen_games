@@ -42,23 +42,29 @@
   "seerNightResultsMiddlePeek" : "You are a __myrole__, and you peeked at 2 of the 3 middle cards. #__p1__=__r1__ #__p2__=__r2__",
   "seerNightResultsPlayerPeek" : "You are a __myrole__, and you peeked at __target__ and saw he was a __target_role__",
 
-  "Robber"         : "Robber"       ,
+  //"Robber"         : "Robber"       ,
   "Robber_desc"    : "At night the Robber can swap his role with another player, and view his new role.",
   "robberPickText" : "Pick One player to Rob",
-  "Did not rob"    : "Did not rob",
+  //"Do not rob"     : "Do not rob",
+  //"Did not rob"    : "Did not rob",
   "robberNightResults" : "You were a __myrole__, but you became a __newrole__ and __target__ became a __myrole__",
 
-  "Troublemaker"      : "Troublemaker" ,
+  //"Troublemaker"      : "Troublemaker" ,
   "Troublemaker_desc" : "At night the Troublemaker can swap the roles of two other players without looking." ,
+  "troublePickText1"  : "Pick 1st player to swap",
+  "troublePickText2"  : "Pick player to swap with __swap1__",
+  //"Do not swap"
+  //"Did not swap"
+  "troubleNightResults" : "You swapped __p1__ and __p2__'s roles.",
 
-  "Insomniac"         : "Insomniac"    ,
+  //"Insomniac"         : "Insomniac"    ,
   "Insomniac_desc"    : "At night the Insomniac wakes up and looks at his own role (to see if it has changed).",
 
   "nr_i_wait"     : "You are an Insomniac. Soon you will find out if your role changed",
   "nr_i_nochange" : "You are still an Insomniac.",
   "nr_i_change"   : "You were an Insomniac, but you became a __curr_role__",
 
-  "Villager"       : "Villager"     ,
+  //"Villager"       : "Villager"     ,
   "Villager_desc"  : "Villagers have no special night ability.",
   "nr_v"           : "You are a Villager, so you have no special night abilities",
 
