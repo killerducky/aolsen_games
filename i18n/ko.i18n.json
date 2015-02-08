@@ -8,6 +8,7 @@
 
   // Main Page
   // Games List
+  "Current games": "진행중인 게임",
   "State"        : "상태",
   "Creating"     : "만들김",
   "Day"          : "낮",
@@ -19,10 +20,12 @@
   "Num Players"  : "선수 수",
   "Enter Game Room" : "게임방 입장",
   "Create Game Room" : "게임방 만들기",
+  "New Game"     : "게임방 반들기",
+  "Users"        : "사용자들",
 
   // Game Page
   // Game State
-  "Actions"       : "행동"       ,   // TODO
+  "Actions"       : "행동"       ,
   "Start Game"    : "게임 시작"  ,
   "Delete Game"   : "게임 삭제"  ,
   "Add Robot Player"           : "로봇 선수 추가",
@@ -31,6 +34,7 @@
   "Join Game"                  : "가입",
   "Leave Game"                 : "탈퇴",
   "Practice Game Mode"         : "연습한 게임 모드",
+  "newGameStartChat"           : "새로운 게임 시작해습니다. 지금 밤입니다.",
 
   "Players"       : "선수 목록"  ,
   "Game roles"    : "인물 목록"  ,
@@ -77,6 +81,9 @@
   "Villager_desc"   : "능력 없습니다.",
   "Villager"        : "동네사람"       ,
   "nr_v"            : "당신은 동네사람여서 특별 능력 없습니다.",
+
+  // Generic Claim Template
+  "claimT"         : "저는 __myRole__입니다. 밤엔『__note__』라고 받았습니다.",
 
   // Waiting
   "nightWaiting" : "다른 선수들의 밤 행동 끝내기를 기달리줘습니다.",

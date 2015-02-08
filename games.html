@@ -39,7 +39,7 @@
   </div>
   {{#if currentUser}}
     <table class="table table-bordered">
-      <caption>Current games</caption>
+      <caption>{{_ "Current games"}}</caption>
       <tr>
         <th width="10%"                  >{{_ "State"}}</th>
         <th width="30%"                  >{{_ "Roles"}}</th>
@@ -49,7 +49,7 @@
       </tr>
       {{#each findAllGames}}
         <tr>
-          <td>{{gameState}}</td>
+          <td>{{_ gameState}}</td>
           <td>
           {{#each game_roles}}
             {{shortRoleName}}
@@ -67,14 +67,14 @@
         </tr>
       {{/each}}
     </table>
-    <button class="add-game btn btn-info" data-toggle="tooltip" title="{{_ 'Create Game Room'}}"><span class="glyphicon glyphicon-plus"></span> New Game</button>
+    <button class="add-game btn btn-info" data-toggle="tooltip" title="{{_ 'Create Game Room'}}"><span class="glyphicon glyphicon-plus"></span> {{_ "New Game"}}</button>
     {{>userList}}
   {{/if}}
 </template>
 
 <template name="userList">
   <ul class="list-inline">
-    <li>Users</li>
+    <li>{{_ "Users"}}</li>
     {{#each onlineUsers}}
       <li> {{username}} </li>
     {{/each}}
@@ -301,9 +301,9 @@
   </td>
   <td width="10%"                  >
     {{#if thisRoleChanged}}
-      <s>{{myinfo.orig_role}}</s><br>
+      <s>{{_ myinfo.orig_role}}</s><br>
     {{/if}}
-    {{myinfo.curr_role}}
+    {{_ myinfo.curr_role}}
   </td>
   <td width="20%" class="hidden-xs">{{thisNightResults}}</td>
   <td width="10%"                  >{{gamePlayerId_username myinfo.voted_for}}</td>
@@ -382,7 +382,7 @@
   <div class="messages-container">
     <div id="messages">
       {{#each messages}}
-        <p>{{username}}: {{content}}</p>
+        <p>{{username}}: {{chatContent}}</p>
       {{/each}}
     </div>
     <form>

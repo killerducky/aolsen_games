@@ -4,30 +4,31 @@
 
 
   // Nav
-  "Home"  : "Home",
-  "About" : "About",
-  "Version" : "Version",
+  //"Home"  : "Home",
+  //"About" : "About",
+  //"Version" : "Version",
 
   // Main Page
   // Games List
-  "State"        : "State"       ,
-  "Roles"        : "Roles"       ,
-  "Day Timer"    : "Day Timer"   ,
-  "Num Players"  : "Num Players" ,
+  //"State"        : "State",
+  //"Roles"        : "Roles",
+  //"Day Timer"    : "Day Timer",
+  //"Num Players"  : "Num Players",
 
   // Game Page
   // Game State
-  "Actions"       : "Actions"        ,   // TODO
-  "Players"       : "Players"        ,
-  "Game roles"    : "Game roles"     ,
-  "Your original role" : "Your original role" ,
+  //"Actions"       : "Actions"        ,
+  //"Players"       : "Players"        ,
+  //"Game roles"    : "Game roles"     ,
+  //"Your original role" : "Your original role" ,
+  "newGameStartChat"     : "New game starting, it is now Night",
 
   // Game Results
-  "Name"          : "Name"           ,
-  "Role"          : "Role"           ,
-  "Night Actions" : "Night Actions"  ,
-  "Voted For"     : "Voted For"      ,
-  "#V"            : "#V",
+  //"Name"          : "Name"           ,
+  //"Role"          : "Role"           ,
+  //"Night Actions" : "Night Actions"  ,
+  //"Voted For"     : "Voted For"      ,
+  //"#V"            : "#V",
 
   // Role strings
   "Werewolf"       : "Werewolf"     ,
@@ -60,6 +61,9 @@
   "Villager"       : "Villager"     ,
   "Villager_desc"  : "Villagers have no special night ability.",
   "nr_v"           : "You are a Villager, so you have no special night abilities",
+
+  // Generic Claim Template
+  "claimT"         : "I'm a __myRole__. My night note: __note__.",
 
   // Waiting
   "nightWaiting" : "Waiting for other players to finish their Night actions.",

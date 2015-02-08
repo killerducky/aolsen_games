@@ -60,6 +60,18 @@ function shuffleArray(array) {
   }
   return array;
 }
+function preTAP2str(preTAP) {
+  if (typeof preTAP !== "object") {
+    return preTAP;
+  }
+  var opts = {};
+  if (preTAP.opts) {
+    for (var key in preTAP.opts) {
+      opts[key] = preTAP2str(preTAP.opts[key]);
+    }
+  }
+  return TAPi18n.__(preTAP.TAPi18n, opts);
+}
 
 getUserLanguage = function () {
   return (Meteor.user() && Meteor.user().profile.language) || "en";
@@ -102,7 +114,7 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("myNightResults", function() {
     gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
-    return gamePlayer && nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id);
+    return gamePlayer && preTAP2str(nightResult(this._id, GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()})._id));
   });
   UI.registerHelper("myNightDone", function() {
     var gamePlayer = GamePlayers.findOne({gameid:this._id, userid:Meteor.userId()});
@@ -143,14 +155,13 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("randomTip", function() {
     if (!Session.get("randomTip")) {
-      console.log("randomTip");
       var tipnum = Math.floor((Math.random()*2));
       Session.set("randomTip", TAPi18n.__("tip_"+tipnum));
     }
     return Session.get("randomTip");
   });
   UI.registerHelper("thisNightResults", function() {
-    return nightResult(this.gameid, this._id);
+    return preTAP2str(nightResult(this.gameid, this._id));
   });
   UI.registerHelper("timer", function() {
     if (this.gameState === "Day") {
@@ -167,6 +178,9 @@ if (Meteor.isClient) {
   });
   UI.registerHelper("roleDesc", function() {
     return this.name + "_desc";
+  });
+  UI.registerHelper("chatContent", function() {
+    return preTAP2str(this.content);
   });
   //UI.registerHelper("t", function(key, options) {
   //  return TAPi18n.__(key, options);
@@ -186,79 +200,84 @@ if (Meteor.isClient) {
       return "";
     }
     var night_targets = gamePlayer.myinfo.night_targets;
-    var str;
+    var preTAP;
     if (gamePlayer.myinfo.orig_role == "Seer") {
       if (gamePlayer.myinfo.night_done) {
         if (night_targets.length === 2) {
-          str = TAPi18n.__("seerNightResultsMiddlePeek", {
-            "myrole":TAPi18n.__("Seer"),
+          preTAP = {"TAPi18n":"seerNightResultsMiddlePeek", "opts":{
+            "myrole":{"TAPi18n":"Seer"},
             "p1": night_targets[0],
-            "r1": TAPi18n.__(game.myinfo.unused_roles[night_targets[0]].name),
+            "r1": {"TAPi18n":game.myinfo.unused_roles[night_targets[0]].name},
             "p2": night_targets[1],
-            "r2": TAPi18n.__(game.myinfo.unused_roles[night_targets[1]].name)
-          });
+            "r2": {"TAPi18n":game.myinfo.unused_roles[night_targets[1]].name}
+          }};
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str = TAPi18n.__("seerNightResultsPlayerPeek", {
-            "myrole":TAPi18n.__("Seer"),
+          preTAP = {"TAPi18n":"seerNightResultsPlayerPeek", "opts":{
+            "myrole":{"TAPi18n":"Seer"},
             "target":targetPlayer.username,
-            "target_role":TAPi18n.__(targetPlayer.myinfo.orig_role)
-          });
+            "target_role":{"TAPi18n":targetPlayer.myinfo.orig_role}
+          }};
         }
       } else {
-        str = "";
+        preTAP = "";
       }
     } else if (gamePlayer.myinfo.orig_role == "Robber") {
       if (gamePlayer.myinfo.night_done) {
         if (night_targets.length === 0) {
-          str = TAPi18n.__("Did not rob");
+          preTAP = TAPi18n.__("Did not rob");
         } else {
           var targetPlayer = GamePlayers.findOne({_id:night_targets[0]});
-          str = TAPi18n.__("robberNightResults", {
+          preTAP = TAPi18n.__("robberNightResults", {
             "myrole" :TAPi18n.__("Robber"),
             "newrole":TAPi18n.__(gamePlayer.myinfo.night_result),
             "target" :targetPlayer.username
           });
         }
       } else {
-        str = "";
+        preTAP = "";
       }
     } else if (gamePlayer.myinfo.orig_role == "Werewolf") {
       if (game.gameState === "Creating") {
-        str = "Error: Not night yet";
+        preTAP = "Error: Not night yet";
       } else {
         var orig_werewolves = game.myinfo.orig_werewolves;
         if (orig_werewolves.length === 1) {
           var i = gamePlayer.myinfo.night_targets[0];
           var centerPeek = game.myinfo.unused_roles[i].name;
-          str = TAPi18n.__("nr_ww", {
+          preTAP = TAPi18n.__("nr_ww", {
             "myrole" : TAPi18n.__("Werewolf"),
             "p1"     : i+1,
             "r1"     : TAPi18n.__(centerPeek)
           });
         } else {
-          str = TAPi18n.__("nr_ww_plural", {
+          var wwstr = "";
+          for (var i=0; i < orig_werewolves.length; i++) {
+            wwstr += orig_werewolves[i].username + ", ";
+          }
+          wwstr += orig_werewolves[orig_werewolves.length-1].username;
+          preTAP = TAPi18n.__("nr_ww_plural", {
             "myrole" : TAPi18n.__("Werewolf"),
-            "players" : orig_werewolves.join(", ")
+            "players" : wwstr
           });
         }
       }
     } else if (gamePlayer.myinfo.orig_role == "Insomniac") {
       if (game.gameState === "Creating") {
-        str = TAPi18n.__("Error: Not night yet");
+        preTAP = TAPi18n.__("Error: Not night yet");
       } else if (game.gameState === "Night") {
-        str = TAPi18n.__("nr_i_wait");
+        preTAP = TAPi18n.__("nr_i_wait");
       } else if (gamePlayer.myinfo.curr_role === gamePlayer.myinfo.orig_role) {
-        str = TAPi18n.__("nr_i_nochange");
+        preTAP = TAPi18n.__("nr_i_nochange");
       } else {
-        str = TAPi18n.__("nr_i_change", {"curr_role" : gamePlayer.myinfo.curr_role});
+        preTAP = TAPi18n.__("nr_i_change", {"curr_role" : gamePlayer.myinfo.curr_role});
       }
     } else if (gamePlayer.myinfo.orig_role == "Villager") {
-      str = TAPi18n.__("nr_v");
+      preTAP = TAPi18n.__("nr_v");
     } else {
-      str = "";
+      preTAP = "";
     }
-    return str;
+    return preTAP;
   }
   Template.home.rendered = function() {
     $("[data-toggle='tooltip']").tooltip();
@@ -539,9 +558,9 @@ if (Meteor.isServer) {
           var str;
           if (gamePlayer.myinfo.orig_role === "Werewolf") {
             if (Math.random() < 0.5) {
-              str = "I'm a Villager. My night note: You are a Villager, so you have no special night abilities";
+              str = {"TAPi18n":"claimT", "opts":{"myRole":"Villager", "note":{"TAPi18n":"nr_v"}}};
             } else {
-              str = "I'm a Robber. My night note: Did not rob"
+              str = {"TAPi18n":"claimT", "opts":{"myRole":"Robber", "note":{"TAPi18n":"Did not rob"}}};
             }
           } else if (gamePlayer.myinfo.orig_role === "Robber" && gamePlayer.myinfo.night_result === "Werewolf") {
             if (Math.random() < 0.5) {
@@ -550,7 +569,7 @@ if (Meteor.isServer) {
               str = "I'm a Robber. My night note: Did not rob"
             }
           } else {
-            str = "I'm a " + gamePlayer.myinfo.orig_role + ". My night note: " + nightResult(game._id, gamePlayer._id);
+            str = "I'm a " + gamePlayer.myinfo.orig_role + ". My night note: " + preTAP2str(nightResult(game._id, gamePlayer._id));
           }
           Messages.insert({
             "gameid" : gameid,
@@ -713,7 +732,7 @@ if (Meteor.isServer) {
         "userid" : null,
         "username" : null,
         "creation_date" : new Date(),
-        "content"  : "New game starting, it is now Night"
+        "content"  : {"TAPi18n":"newGameStartChat"}
       });
 
       // bots make moves
